@@ -34,6 +34,7 @@
   .stat { background:#1d2536; border-radius:10px; padding:8px; text-align:center; }
   .stat .v { font-size:16px; font-weight:800; }
   .stat .k { font-size:10px; color:var(--dim); margin-top:2px; }
+  .act { margin-top:8px; font-size:12px; color:var(--dim); line-height:1.4; }
   table { width:100%; border-collapse:collapse; font-size:12px; margin-top:6px; }
   th, td { padding:7px 4px; text-align:right; border-bottom:1px solid var(--line); }
   th:first-child, td:first-child { text-align:left; }
@@ -122,6 +123,7 @@
       <div class="stat"><div class="v" id="c-last">–</div><div class="k">last run</div></div>
       <div class="stat"><div class="v" id="c-ok">–</div><div class="k">ok / fail</div></div>
     </div>
+    <div class="act" id="act-c">💤 idle</div>
     <div class="rowbtn">
       <button id="btn-nap-claude">Nap 12h</button>
       <button id="btn-wake-claude">Wake</button>
@@ -139,6 +141,7 @@
       <div class="stat"><div class="v" id="g-last">–</div><div class="k">last run</div></div>
       <div class="stat"><div class="v" id="g-ok">–</div><div class="k">ok / fail</div></div>
     </div>
+    <div class="act" id="act-g">💤 idle</div>
     <div class="rowbtn">
       <button id="btn-nap-gpt">Nap 12h</button>
       <button id="btn-wake-gpt">Wake</button>
@@ -156,6 +159,7 @@
       <div class="stat"><div class="v" id="m-last">–</div><div class="k">last run</div></div>
       <div class="stat"><div class="v" id="m-ok">–</div><div class="k">ok / fail</div></div>
     </div>
+    <div class="act" id="act-m">💤 idle</div>
     <div class="rowbtn">
       <button id="btn-nap-gemini">Nap 12h</button>
       <button id="btn-wake-gemini">Wake</button>
@@ -173,10 +177,75 @@
       <div class="stat"><div class="v" id="a-last">–</div><div class="k">last run</div></div>
       <div class="stat"><div class="v" id="a-ok">–</div><div class="k">ok / fail</div></div>
     </div>
+    <div class="act" id="act-a">💤 idle</div>
     <div class="rowbtn">
       <button id="btn-nap-agy">Nap 12h</button>
       <button id="btn-wake-agy">Wake</button>
     </div>
+  </div>
+
+  <div class="card" id="card-or">
+    <h2>OpenRouter · researcher</h2>
+    <span class="pill grey" id="pill-or">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="o-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="o-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="o-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="o-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="o-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="o-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-o">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-or">Nap 12h</button>
+      <button id="btn-wake-or">Wake</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-grok">
+    <h2>Grok · researcher</h2>
+    <span class="pill grey" id="pill-grok">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="k-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="k-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="k-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="k-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="k-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="k-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-k">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-grok">Nap 12h</button>
+      <button id="btn-wake-grok">Wake</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-kaggle">
+    <h2>Kaggle GPU · validator</h2>
+    <span class="pill grey" id="pill-kaggle">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="x-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="x-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="x-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="x-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="x-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="x-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-x">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-kaggle">Nap 12h</button>
+      <button id="btn-wake-kaggle">Wake</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Backlog · awaiting validation</h2>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="backlog-n">–</div><div class="k">unvalidated candidates</div></div>
+      <div class="stat"><div class="v" id="backlog-oldest">–</div><div class="k">oldest waiting</div></div>
+      <div class="stat"><div class="v" id="backlog-verd">–</div><div class="k">verdicts written</div></div>
+    </div>
+    <div class="act" id="backlog-list">–</div>
   </div>
 
   <div class="card">
@@ -187,6 +256,9 @@
       <tr><td>gpt</td><td id="w-g-runs">–</td><td id="w-g-ofc">–</td><td id="w-g-tok">–</td><td id="w-g-cand">–</td></tr>
       <tr><td>gemini</td><td id="w-m-runs">–</td><td id="w-m-ofc">–</td><td id="w-m-tok">–</td><td id="w-m-cand">–</td></tr>
       <tr><td>agy</td><td id="w-a-runs">–</td><td id="w-a-ofc">–</td><td id="w-a-tok">–</td><td id="w-a-cand">–</td></tr>
+      <tr><td>or</td><td id="w-o-runs">–</td><td id="w-o-ofc">–</td><td id="w-o-tok">–</td><td id="w-o-cand">–</td></tr>
+      <tr><td>grok</td><td id="w-k-runs">–</td><td id="w-k-ofc">–</td><td id="w-k-tok">–</td><td id="w-k-cand">–</td></tr>
+      <tr><td>kaggle</td><td id="w-x-runs">–</td><td id="w-x-ofc">–</td><td id="w-x-tok">–</td><td id="w-x-cand">–</td></tr>
     </table>
   </div>
 
@@ -273,8 +345,8 @@ function dayStats(rows, agent, day) {
   return s;
 }
 
-const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"]];
-const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy"};
+const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["k","grok"],["x","kaggle"]];
+const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", k:"grok", x:"kaggle"};
 
 function resetHHMM(iso) {
   try { return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
@@ -306,7 +378,7 @@ async function refresh() {
     PIPE_ON = b64d(swf.content).split("\n")[0].trim() === "# ON";
 
     const nowS = Date.now()/1000, paused = {};
-    for (const a of ["claude","gpt","gemini","agy"]) {
+    for (const [, a] of AGENTS) {
       try { const u = parseInt((await ghGet("usage/paused-"+a+"-until")).trim(),10); paused[a] = u > nowS ? u : 0; }
       catch(e) { paused[a] = 0; }
     }
@@ -347,7 +419,41 @@ async function refresh() {
       $("w-"+pfx+"-ofc").textContent = w.ok+"/"+w.fail+"/"+w.cap;
       $("w-"+pfx+"-tok").textContent = fmtN(w.tin+w.tout);
       $("w-"+pfx+"-cand").textContent = w.cand;
+      // live activity: what this agent is doing RIGHT NOW (pushed at run
+      // start; stale >30min reads as idle — it's napping, parked, or off)
+      const actEl = $("act-"+pfx);
+      try {
+        const act = JSON.parse(await ghGet("usage/activity-"+agent+".json"));
+        const ageMin = Math.round(Date.now()/1000 - (act.started||0));
+        if (ageMin > 1800) actEl.textContent = "💤 idle";
+        else {
+          const icon = act.mode === "validator" ? "⚙️" : "💡";
+          const what = act.mode === "validator" ? "validating" : "researching";
+          actEl.textContent = icon+" "+what+" · "+String(act.detail||"").slice(0,70)+" · "+Math.max(1,Math.round(ageMin/60))+"m";
+        }
+      } catch(e) { actEl.textContent = "💤 idle"; }
     }
+
+    // backlog: candidates with no verdict yet (one recursive tree call)
+    try {
+      const tr = await (await fetch("https://api.github.com/repos/"+GH_REPO+"/git/trees/main?recursive=1",
+        {headers:{"Authorization":"Bearer "+CFG.pat, "Accept":"application/vnd.github+json"}})).json();
+      const cands = [], verdicts = new Set();
+      for (const t of (tr.tree||[])) {
+        if (t.type !== "blob") continue;
+        if (t.path.startsWith("candidates/") && t.path.endsWith(".md"))
+          cands.push(t.path.slice("candidates/".length));
+        else if (t.path.startsWith("results/verdict-") && t.path.endsWith(".md"))
+          verdicts.add(t.path.slice("results/verdict-".length));
+      }
+      const waiting = cands.filter(c => !verdicts.has(c)).sort();
+      $("backlog-n").textContent = waiting.length;
+      $("backlog-verd").textContent = verdicts.size;
+      $("backlog-oldest").textContent = waiting.length ? waiting[0].slice(0,24)+"…" : "—";
+      $("backlog-list").textContent = waiting.length
+        ? "waiting: "+waiting.slice(0,5).join(", ")+(waiting.length>5 ? " +"+(waiting.length-5)+" more" : "")
+        : "queue clear 🎉";
+    } catch(e) { $("backlog-n").textContent = "?"; }
 
     const box = $("runs"); box.innerHTML = "";
     rows.slice(-12).reverse().forEach(r => {
