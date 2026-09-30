@@ -95,7 +95,7 @@
   </div>
 
   <div class="card">
-    <h2>Candidates per day</h2>
+    <h2>Candidates & fails per day</h2>
     <div class="bars" id="cand-chart"><div style="color:var(--dim);font-size:12px;">loading…</div></div>
   </div>
 
@@ -563,6 +563,49 @@ async function refresh() {
     }
     rows.sort((a,b) => String(a.ts||"").localeCompare(String(b.ts||"")));
 
+    // fails per day + active fail streaks (for the chart + alert banner)
+    const failsPerDay = {};
+    const trailFail = {};   // agent -> consecutive trailing fails
+    const lastErr = {};     // agent -> last fail error text
+    {
+      const byAgent = {};
+      for (const r of rows) {
+        if (!r.agent || !r.ts) continue;
+        (byAgent[r.agent] = byAgent[r.agent]||[]).push(r);
+        if (r.status === "fail") {
+          const day = String(r.ts).slice(0,10);
+          failsPerDay[day] = (failsPerDay[day]||0) + 1;
+        }
+      }
+      for (const [a, rs] of Object.entries(byAgent)) {
+        let n = 0;
+        for (let i = rs.length - 1; i >= 0; i--) {
+          if (rs[i].status === "fail") { n++; lastErr[a] = rs[i].err || rs[i].reason || ""; }
+          else break;
+        }
+        if (n) trailFail[a] = n;
+      }
+    }
+    // active-failure alert banner
+    try {
+      let ab = $("fail-alert");
+      const bad = Object.keys(trailFail).filter(a => a !== "muse");
+      if (!ab) {
+        ab = document.createElement("div");
+        ab.id = "fail-alert";
+        ab.className = "card";
+        ab.style.borderColor = "var(--red)";
+        const app = document.getElementById("app");
+        app.insertBefore(ab, app.firstChild);
+      }
+      if (bad.length) {
+        ab.hidden = false;
+        ab.innerHTML = "<h2 style='color:var(--red)'>⚠ Active failures</h2>" + bad.map(a =>
+          "<div style='font-size:13px;margin-top:6px'><b>"+a+"</b> · "+trailFail[a]+" in a row<br><span style='color:var(--dim);font-size:11px'>"+String(lastErr[a]||"").slice(0,120)+"</span></div>"
+        ).join("");
+      } else ab.hidden = true;
+    } catch(e) {}
+
     // Verdict attribution: per-agent "verdicts" used to sum run-log
     // new_verdicts, which double-counts — 4 supervisors share one working
     // tree and each run counts `ls results/` before/after as its own work
@@ -754,7 +797,7 @@ async function refresh() {
       const parts = Object.keys(vByV.all||{}).sort((a,b)=>(vByV.all[b]||0)-(vByV.all[a]||0))
         .map(k => (disp[k]||k)+" "+(vByV.all[k]||0));
       $("backlog-vsplit").textContent = parts.length ? "by validator: "+parts.join(" · ") : "–";
-      // daily candidates bar chart (last 14 days, from filename dates)
+      // daily candidates + fails bar chart (last 14 days)
       try {
         const perDay = {};
         for (const c of cands) {
@@ -766,16 +809,27 @@ async function refresh() {
         for (let i = 13; i >= 0; i--) {
           const d = new Date(nowD); d.setDate(d.getDate() - i);
           const key = d.toISOString().slice(0,10);
-          days.push({key, label: (d.getMonth()+1)+"/"+d.getDate(), n: perDay[key]||0});
+          days.push({key, label: (d.getMonth()+1)+"/"+d.getDate(), n: perDay[key]||0, f: failsPerDay[key]||0});
         }
-        const maxN = Math.max(1, ...days.map(x => x.n));
+        const maxN = Math.max(1, ...days.map(x => Math.max(x.n, x.f)));
         const ch = $("cand-chart"); ch.innerHTML = "";
         for (const x of days) {
           const b = document.createElement("div"); b.className = "bar";
-          const h = Math.max(3, Math.round(x.n / maxN * 70));
-          b.innerHTML = '<div class="n">'+(x.n||"")+'</div><div class="col" style="height:'+h+'px;'+(x.n?"":"opacity:.25")+'"></div><div class="d">'+x.label+'</div>';
+          const hc = Math.max(x.n ? 3 : 0, Math.round(x.n / maxN * 56));
+          const hf = Math.max(x.f ? 3 : 0, Math.round(x.f / maxN * 56));
+          b.innerHTML = '<div class="n">'+(x.n||"")+'</div>'
+            + '<div style="display:flex;gap:2px;align-items:flex-end;">'
+            + '<div class="col" title="'+x.n+' candidates" style="height:'+hc+'px;'+(x.n?"":"opacity:.15")+'"></div>'
+            + '<div class="col" title="'+x.f+' fails" style="height:'+hf+'px;background:var(--red);'+(x.f?"":"opacity:.15")+'"></div>'
+            + '</div><div class="d">'+x.label+'</div>';
+          if (x.f) b.querySelectorAll(".n")[0].innerHTML += ' <span style="color:var(--red)">✕'+x.f+'</span>';
           ch.appendChild(b);
         }
+        // legend
+        const lg = document.createElement("div");
+        lg.style.cssText = "font-size:11px;color:var(--dim);margin-top:6px;";
+        lg.innerHTML = '<span style="display:inline-block;width:10px;height:10px;background:var(--accent,#4da3ff);border-radius:2px;"></span> candidates &nbsp; <span style="display:inline-block;width:10px;height:10px;background:var(--red);border-radius:2px;"></span> failed runs';
+        ch.parentNode.appendChild(lg);
       } catch(e) { $("cand-chart").innerHTML = '<div style="color:var(--dim);font-size:12px;">chart unavailable</div>'; }
     } catch(e) { $("backlog-n").textContent = "?"; }
 
