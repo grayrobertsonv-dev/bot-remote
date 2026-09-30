@@ -110,8 +110,11 @@
     <div class="qrow" id="quota-5h"></div>
     <div class="qrow" id="quota-week"></div>
     <div class="qrow" id="quota-or"></div>
+    <div class="qrow" id="quota-orx"></div>
     <div class="qrow" id="quota-muse"></div>
     <div class="qrow" id="quota-kaggle"></div>
+    <div class="qrow" id="quota-kaggle2"></div>
+    <div class="qrow" id="quota-crosscheck"></div>
     <div class="qrow" id="quota-gemini"></div>
     <div class="qrow" id="quota-agy"></div>
     <div style="font-size:11px;color:var(--dim);margin-top:8px;">Claude &amp; ChatGPT auto-stop at 90% — the loop idles instead of burning the last 10%.</div>
@@ -212,6 +215,25 @@
     </div>
   </div>
 
+  <div class="card" id="card-orx">
+    <h2>orx · Actions researcher</h2>
+    <span class="pill grey" id="pill-orx">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="w-runs">–</div><div class="k">runs · all time</div></div>
+      <div class="stat"><div class="v" id="w-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="w-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="w-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="w-verd">–</div><div class="k">verdicts</div></div>
+      <div class="stat"><div class="v" id="w-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="w-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-w">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-orx">Nap 12h</button>
+      <button id="btn-wake-orx">Wake</button>
+    </div>
+  </div>
+
   <div class="card" id="card-kaggle">
     <h2>Kaggle GPU · validator</h2>
     <span class="pill grey" id="pill-kaggle">…</span>
@@ -228,6 +250,44 @@
     <div class="rowbtn">
       <button id="btn-nap-kaggle">Nap 12h</button>
       <button id="btn-wake-kaggle">Wake</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-kaggle2">
+    <h2>Kaggle 2 · GPU validator</h2>
+    <span class="pill grey" id="pill-kaggle2">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="y-runs">–</div><div class="k">runs · all time</div></div>
+      <div class="stat"><div class="v" id="y-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="y-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="y-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="y-verd">–</div><div class="k">verdicts</div></div>
+      <div class="stat"><div class="v" id="y-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="y-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-y">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-kaggle2">Nap 12h</button>
+      <button id="btn-wake-kaggle2">Wake</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-crosscheck">
+    <h2>Oracle · CPU cross-checker</h2>
+    <span class="pill grey" id="pill-crosscheck">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="z-runs">–</div><div class="k">runs · all time</div></div>
+      <div class="stat"><div class="v" id="z-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="z-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="z-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="z-verd">–</div><div class="k">checks</div></div>
+      <div class="stat"><div class="v" id="z-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="z-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-z">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-crosscheck">Nap 12h</button>
+      <button id="btn-wake-crosscheck">Wake</button>
     </div>
   </div>
 
@@ -258,7 +318,10 @@
       <tr><td>gemini</td><td id="w-m-runs">–</td><td id="w-m-ofc">–</td><td id="w-m-tok">–</td><td id="w-m-cand">–</td><td id="w-m-verd">–</td></tr>
       <tr><td>agy</td><td id="w-a-runs">–</td><td id="w-a-ofc">–</td><td id="w-a-tok">–</td><td id="w-a-cand">–</td><td id="w-a-verd">–</td></tr>
       <tr><td>or</td><td id="w-o-runs">–</td><td id="w-o-ofc">–</td><td id="w-o-tok">–</td><td id="w-o-cand">–</td><td id="w-o-verd">–</td></tr>
+      <tr><td>orx</td><td id="w-w-runs">–</td><td id="w-w-ofc">–</td><td id="w-w-tok">–</td><td id="w-w-cand">–</td><td id="w-w-verd">–</td></tr>
       <tr><td>kaggle</td><td id="w-x-runs">–</td><td id="w-x-ofc">–</td><td id="w-x-tok">–</td><td id="w-x-cand">–</td><td id="w-x-verd">–</td></tr>
+      <tr><td>kaggle2</td><td id="w-y-runs">–</td><td id="w-y-ofc">–</td><td id="w-y-tok">–</td><td id="w-y-cand">–</td><td id="w-y-verd">–</td></tr>
+      <tr><td>crosscheck</td><td id="w-z-runs">–</td><td id="w-z-ofc">–</td><td id="w-z-tok">–</td><td id="w-z-cand">–</td><td id="w-z-verd">–</td></tr>
       <tr><td><b>total</b></td><td id="w-t-runs">–</td><td id="w-t-ofc">–</td><td id="w-t-tok">–</td><td id="w-t-cand">–</td><td id="w-t-verd">–</td></tr>
     </table>
   </div>
@@ -339,22 +402,23 @@ function renderQuota(id, label, win) {
 function dayStats(rows, agent, day) {
   // (r.ts||"") — one malformed row without a ts must not kill the whole page
   const f = rows.filter(r => r.agent===agent && (!day || (r.ts||"").slice(0,10)===day));
-  const s = {runs:f.length, ok:0, fail:0, cap:0, tin:0, tout:0, cand:0, verd:0, last:null};
+  const s = {runs:f.length, ok:0, fail:0, cap:0, tin:0, tout:0, cand:0, verd:0, chk:0, last:null};
   for (const r of f) {
     if (r.status==="ok") s.ok++; else if (r.status==="cap") s.cap++; else s.fail++;
     s.tin += parseInt(r.in_tok||"0",10)||0;
     s.tout += parseInt(r.out_tok||"0",10)||0;
     s.cand += parseInt(r.new_candidates||"0",10)||0;
     s.verd += parseInt(r.new_verdicts||"0",10)||0;
+    s.chk += parseInt(r.new_crosschecks||"0",10)||0;
     if (!s.last || r.ts > s.last.ts) s.last = r;
   }
   return s;
 }
 
-const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["x","kaggle"]];
+const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["w","orx"],["x","kaggle"],["y","kaggle2"],["z","crosscheck"]];
 // muse is ops-only (hourly health checks, no research stats) — it gets a
 // simple health card below instead of a stats row anywhere
-const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", x:"kaggle", u:"muse"};
+const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", w:"orx", x:"kaggle", y:"kaggle2", z:"crosscheck", u:"muse"};
 
 function resetHHMM(iso) {
   try { return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
@@ -414,7 +478,7 @@ async function refresh() {
     let rows = [];
     // The kaggle kernel appends to its own log (concurrent appends to the
     // shared log cause rebase conflicts). Merge it read-only.
-    for (const lp of ["usage/run-log.jsonl", "usage/run-log-kaggle.jsonl"]) {
+    for (const lp of ["usage/run-log.jsonl", "usage/run-log-kaggle.jsonl", "usage/run-log-kaggle2.jsonl", "usage/run-log-crosscheck.jsonl"]) {
       try {
         const txt = await ghGet(lp);
         for (const l of txt.trim().split("\n")) {
@@ -427,7 +491,7 @@ async function refresh() {
     // rows to viewer-local BEFORE sorting, so the merged list is chronological
     // (2026-09-30: sorting first left every kaggle row stamped 4h ahead).
     for (const r of rows) {
-      if (r.agent === "kaggle") {
+      if (r.agent === "kaggle" || r.agent === "kaggle2" || r.agent === "crosscheck") {
         const m = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})(\d{2})/.exec(r.ts||"");
         if (m) {
           const d = new Date(Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]));
@@ -501,14 +565,15 @@ async function refresh() {
       // files (vByV.all), not the run-log sum — the run-log double-counts
       // under concurrent supervisors.
       renderAgent(pfx, allS, paused[agent], PIPE_ON, quotaNote[agent], working);
-      $(pfx+"-verd").textContent = vByV.all[agent]||0;
+      // crosscheck writes crosscheck-*.md, not verdicts — show its check count
+      $(pfx+"-verd").textContent = agent==="crosscheck" ? allS.chk : (vByV.all[agent]||0);
       // Usage table shows TODAY's stats; verdicts from vByV.d1 ("–" until
       // the first report run that includes the d1 key).
       $("w-"+pfx+"-runs").textContent = todayS.runs;
       $("w-"+pfx+"-ofc").textContent = todayS.ok+"/"+todayS.fail+"/"+todayS.cap;
       $("w-"+pfx+"-tok").textContent = fmtN(todayS.tin+todayS.tout);
       $("w-"+pfx+"-cand").textContent = todayS.cand;
-      $("w-"+pfx+"-verd").textContent = vByV.d1 ? (vByV.d1[agent]||0) : "–";
+      $("w-"+pfx+"-verd").textContent = agent==="crosscheck" ? todayS.chk : (vByV.d1 ? (vByV.d1[agent]||0) : "–");
       const actEl = $("act-"+pfx);
       if (paused[agent]) {
         const d = new Date(paused[agent]*1000);
@@ -593,7 +658,7 @@ async function refresh() {
         ? "waiting: "+waiting.slice(0,5).join(", ")+(waiting.length>5 ? " +"+(waiting.length-5)+" more" : "")
         : "queue clear 🎉";
       // per-validator split of the verdict files — sums to backlog-verd by construction
-      const disp = {claude:"Claude", gpt:"GPT", gemini:"Gemini", agy:"Agy", or:"OpenRouter", kaggle:"Kaggle", muse:"Muse"};
+      const disp = {claude:"Claude", gpt:"GPT", gemini:"Gemini", agy:"Agy", or:"OpenRouter", kaggle:"Kaggle", kaggle2:"Kaggle 2", crosscheck:"Oracle", muse:"Muse"};
       const parts = Object.keys(vByV.all||{}).sort((a,b)=>(vByV.all[b]||0)-(vByV.all[a]||0))
         .map(k => (disp[k]||k)+" "+(vByV.all[k]||0));
       $("backlog-vsplit").textContent = parts.length ? "by validator: "+parts.join(" · ") : "–";
@@ -685,6 +750,25 @@ async function refresh() {
           '<div style="font-size:11px;color:var(--dim);margin-top:4px;">week of '+wk+' · free tier · resets Sun 00:00 UTC</div>';
       } else $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle · GPU — waiting for notebook switch</span>';
     } catch(e) { $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle GPU meter unavailable</span>'; }
+    // Second kernel: same estimate from its own heartbeat. Hidden until deployed.
+    try {
+      const k2act = JSON.parse(await ghGet("usage/activity-kaggle2.json"));
+      const gpu2 = k2act.gpu;
+      if (gpu2 && isFinite(gpu2.seconds)) {
+        const usedH2 = gpu2.seconds/3600, QUOTA_H = 30;
+        const pct2 = Math.max(0, Math.min(100, Math.round(usedH2/QUOTA_H*100)));
+        const kc2 = pct2 >= 90 ? "red" : (pct2 >= 75 ? "amber" : "green");
+        const kcol2 = kc2==="red" ? "var(--red)" : (kc2==="amber" ? "var(--amber)" : "var(--green)");
+        const wk2 = new Date((gpu2.week||0)*1000).toLocaleDateString("en-US",{month:"short",day:"numeric"});
+        $("quota-kaggle2").innerHTML =
+          '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
+          '<span>Kaggle 2 · GPU (est.)</span><span class="pill '+kc2+'">'+usedH2.toFixed(1)+' / '+QUOTA_H+'h</span></div>' +
+          '<div class="qbar"><div style="width:'+pct2+'%;background:'+kcol2+'"></div></div>' +
+          '<div style="font-size:11px;color:var(--dim);margin-top:4px;">week of '+wk2+' · free tier · resets Sun 00:00 UTC</div>';
+      } else $("quota-kaggle2").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle 2 · GPU — waiting for first heartbeat</span>';
+    } catch(e) { $("quota-kaggle2").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle 2 · not deployed yet</span>'; }
+    quotaStatic("quota-crosscheck", "Oracle · always-free CPU (no meter)", paused.crosscheck);
+    quotaStatic("quota-orx", "orx · GitHub Actions free tier (no meter)", paused.orx);
     quotaStatic("quota-gemini", "Gemini · free tier", paused.gemini);
     quotaStatic("quota-agy", "Agy · free tier", paused.agy);
 
