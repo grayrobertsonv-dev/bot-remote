@@ -116,7 +116,7 @@
     <h2>Claude · researcher</h2>
     <span class="pill grey" id="pill-claude">…</span>
     <div class="statgrid">
-      <div class="stat"><div class="v" id="c-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="c-runs">–</div><div class="k">runs · all time</div></div>
       <div class="stat"><div class="v" id="c-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="c-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="c-cand">–</div><div class="k">candidates</div></div>
@@ -135,7 +135,7 @@
     <h2>ChatGPT · researcher</h2>
     <span class="pill grey" id="pill-gpt">…</span>
     <div class="statgrid">
-      <div class="stat"><div class="v" id="g-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="g-runs">–</div><div class="k">runs · all time</div></div>
       <div class="stat"><div class="v" id="g-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="g-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="g-cand">–</div><div class="k">candidates</div></div>
@@ -154,7 +154,7 @@
     <h2>Gemini · researcher</h2>
     <span class="pill grey" id="pill-gemini">…</span>
     <div class="statgrid">
-      <div class="stat"><div class="v" id="m-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="m-runs">–</div><div class="k">runs · all time</div></div>
       <div class="stat"><div class="v" id="m-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="m-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="m-cand">–</div><div class="k">candidates</div></div>
@@ -173,7 +173,7 @@
     <h2>Agy · researcher</h2>
     <span class="pill grey" id="pill-agy">…</span>
     <div class="statgrid">
-      <div class="stat"><div class="v" id="a-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="a-runs">–</div><div class="k">runs · all time</div></div>
       <div class="stat"><div class="v" id="a-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="a-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="a-cand">–</div><div class="k">candidates</div></div>
@@ -192,7 +192,7 @@
     <h2>OpenRouter · researcher</h2>
     <span class="pill grey" id="pill-or">…</span>
     <div class="statgrid">
-      <div class="stat"><div class="v" id="o-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="o-runs">–</div><div class="k">runs · all time</div></div>
       <div class="stat"><div class="v" id="o-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="o-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="o-cand">–</div><div class="k">candidates</div></div>
@@ -211,7 +211,7 @@
     <h2>Kaggle GPU · validator</h2>
     <span class="pill grey" id="pill-kaggle">…</span>
     <div class="statgrid">
-      <div class="stat"><div class="v" id="x-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="x-runs">–</div><div class="k">runs · all time</div></div>
       <div class="stat"><div class="v" id="x-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="x-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="x-cand">–</div><div class="k">candidates</div></div>
@@ -226,6 +226,25 @@
     </div>
   </div>
 
+  <div class="card" id="card-muse">
+    <h2>Muse · validator</h2>
+    <span class="pill grey" id="pill-muse">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="u-runs">–</div><div class="k">runs · all time</div></div>
+      <div class="stat"><div class="v" id="u-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="u-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="u-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="u-verd">–</div><div class="k">verdicts</div></div>
+      <div class="stat"><div class="v" id="u-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="u-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-u">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-muse">Nap 12h</button>
+      <button id="btn-wake-muse">Wake</button>
+    </div>
+  </div>
+
   <div class="card">
     <h2>Backlog · awaiting validation</h2>
     <div class="statgrid">
@@ -234,10 +253,11 @@
       <div class="stat"><div class="v" id="backlog-verd">–</div><div class="k">verdicts written</div></div>
     </div>
     <div class="act" id="backlog-list">–</div>
+    <div class="act" id="backlog-vsplit" style="opacity:.75">–</div>
   </div>
 
   <div class="card">
-    <h2>Usage · last 7 days</h2>
+    <h2>Usage · today</h2>
     <table>
       <tr><th>agent</th><th>runs</th><th>ok/fail/cap</th><th>tokens</th><th>cand</th><th>verd</th></tr>
       <tr><td>claude</td><td id="w-c-runs">–</td><td id="w-c-ofc">–</td><td id="w-c-tok">–</td><td id="w-c-cand">–</td><td id="w-c-verd">–</td></tr>
@@ -246,6 +266,7 @@
       <tr><td>agy</td><td id="w-a-runs">–</td><td id="w-a-ofc">–</td><td id="w-a-tok">–</td><td id="w-a-cand">–</td><td id="w-a-verd">–</td></tr>
       <tr><td>or</td><td id="w-o-runs">–</td><td id="w-o-ofc">–</td><td id="w-o-tok">–</td><td id="w-o-cand">–</td><td id="w-o-verd">–</td></tr>
       <tr><td>kaggle</td><td id="w-x-runs">–</td><td id="w-x-ofc">–</td><td id="w-x-tok">–</td><td id="w-x-cand">–</td><td id="w-x-verd">–</td></tr>
+      <tr><td>muse</td><td id="w-u-runs">–</td><td id="w-u-ofc">–</td><td id="w-u-tok">–</td><td id="w-u-cand">–</td><td id="w-u-verd">–</td></tr>
     </table>
   </div>
 
@@ -333,8 +354,8 @@ function dayStats(rows, agent, day) {
   return s;
 }
 
-const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["x","kaggle"]];
-const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", x:"kaggle"};
+const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["x","kaggle"],["u","muse"]];
+const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", x:"kaggle", u:"muse"};
 
 function resetHHMM(iso) {
   try { return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
@@ -382,10 +403,29 @@ async function refresh() {
     }
 
     let rows = [];
-    try {
-      const txt = await ghGet("usage/run-log.jsonl");
-      rows = txt.trim().split("\n").filter(Boolean).map(l => { try { return JSON.parse(l); } catch(e){ return null; } }).filter(Boolean);
-    } catch(e) { /* no runs logged yet */ }
+    // The kaggle kernel appends to its own log (concurrent appends to the
+    // shared log cause rebase conflicts). Merge it read-only.
+    for (const lp of ["usage/run-log.jsonl", "usage/run-log-kaggle.jsonl"]) {
+      try {
+        const txt = await ghGet(lp);
+        for (const l of txt.trim().split("\n")) {
+          if (!l.trim()) continue;
+          try { rows.push(JSON.parse(l)); } catch(e) {}
+        }
+      } catch(e) { /* missing log: fine */ }
+    }
+    rows.sort((a,b) => String(a.ts||"").localeCompare(String(b.ts||"")));
+
+    // Verdict attribution: per-agent "verdicts" used to sum run-log
+    // new_verdicts, which double-counts — 4 supervisors share one working
+    // tree and each run counts `ls results/` before/after as its own work
+    // (2026-09-30: 56 logged vs 43 files). Verdict files now carry a
+    // `Validator: <agent>` first line; this JSON counts those, so the
+    // per-agent tallies always sum to the backlog's file count.
+    // Keys: all = all-time, d7 = last 7 days, d1 = today.
+    let vByV = {all:{}, d7:{}, total:0};
+    try { vByV = JSON.parse(await ghGet("usage/verdicts-by-validator.json")); }
+    catch(e) { /* not generated yet: zeros */ }
 
     // pipeline card
     const pp = $("pipe-pill"), bt = $("btn-toggle");
@@ -410,40 +450,54 @@ async function refresh() {
     } catch(e) {}
 
     for (const [pfx, agent] of AGENTS) {
-      const s = dayStats(rows, agent, day);
-      const w = dayStats(rows, agent, null);
+      const todayS = dayStats(rows, agent, day);  // today's run-log rows
+      const allS = dayStats(rows, agent, null);   // all-time run-log rows
 
       // live activity: what this agent is doing RIGHT NOW (pushed at run
       // start; researcher/validator heartbeats older than 30min read as
       // idle — it's napping, parked, or off; mode "idle" is a deliberate
       // parked state with its own reason, shown as-is)
-      let actMode = null, actAgeMin = Infinity, actDetail = "";
+      let actMode = null, actAgeMin = Infinity, actDetail = "", actSeen = false;
       try {
         const act = JSON.parse(await ghGet("usage/activity-"+agent+".json"));
+        actSeen = true;
         actMode = act.mode || null;
         actDetail = act.detail || "";
         actAgeMin = (Date.now()/1000 - (act.started||0)) / 60;
       } catch(e) {}
       let runAgeMin = Infinity;
-      if (w.last && !isNaN(tsMs(w.last.ts))) runAgeMin = (Date.now() - tsMs(w.last.ts)) / 60000;
+      if (allS.last && !isNaN(tsMs(allS.last.ts))) runAgeMin = (Date.now() - tsMs(allS.last.ts)) / 60000;
       const hbFresh = (actMode === "researcher" || actMode === "validator") && actAgeMin <= 30;
       const runFresh = runAgeMin <= 60;
       const working = hbFresh || runFresh;
 
-      renderAgent(pfx, s, paused[agent], PIPE_ON, quotaNote[agent], working);
-      $("w-"+pfx+"-runs").textContent = w.runs;
-      $("w-"+pfx+"-ofc").textContent = w.ok+"/"+w.fail+"/"+w.cap;
-      $("w-"+pfx+"-tok").textContent = fmtN(w.tin+w.tout);
-      $("w-"+pfx+"-cand").textContent = w.cand;
-      $("w-"+pfx+"-verd").textContent = w.verd;
+      // Agent cards show ALL-TIME run stats; verdicts come from stamped
+      // files (vByV.all), not the run-log sum — the run-log double-counts
+      // under concurrent supervisors.
+      renderAgent(pfx, allS, paused[agent], PIPE_ON, quotaNote[agent], working);
+      $(pfx+"-verd").textContent = vByV.all[agent]||0;
+      // Usage table shows TODAY's stats; verdicts from vByV.d1 ("–" until
+      // the first report run that includes the d1 key).
+      $("w-"+pfx+"-runs").textContent = todayS.runs;
+      $("w-"+pfx+"-ofc").textContent = todayS.ok+"/"+todayS.fail+"/"+todayS.cap;
+      $("w-"+pfx+"-tok").textContent = fmtN(todayS.tin+todayS.tout);
+      $("w-"+pfx+"-cand").textContent = todayS.cand;
+      $("w-"+pfx+"-verd").textContent = vByV.d1 ? (vByV.d1[agent]||0) : "–";
       const actEl = $("act-"+pfx);
-      if (actMode === "idle") actEl.textContent = "⏸️ " + String(actDetail).slice(0, 80);
+      if (paused[agent]) {
+        const d = new Date(paused[agent]*1000);
+        const md = d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+        const hm = String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+        actEl.textContent = "😴 napping until "+md+" "+hm;
+      }
+      else if (actMode === "idle") actEl.textContent = "⏸️ " + String(actDetail).slice(0, 80);
       else if (hbFresh) {
         const icon = actMode === "validator" ? "⚙️" : "💡";
         const what = actMode === "validator" ? "validating" : "researching";
         actEl.textContent = icon+" "+what+" · "+String(actDetail).slice(0,70)+" · "+Math.max(1,Math.round(actAgeMin))+"m";
       }
       else if (runFresh) actEl.textContent = "✓ run done "+Math.max(1,Math.round(runAgeMin))+"m ago";
+      else if (!actSeen && !allS.last) actEl.textContent = "🕐 waiting for first signal";
       else actEl.textContent = "💤 idle";
     }
 
@@ -466,6 +520,11 @@ async function refresh() {
       $("backlog-list").textContent = waiting.length
         ? "waiting: "+waiting.slice(0,5).join(", ")+(waiting.length>5 ? " +"+(waiting.length-5)+" more" : "")
         : "queue clear 🎉";
+      // per-validator split of the verdict files — sums to backlog-verd by construction
+      const disp = {claude:"Claude", gpt:"GPT", gemini:"Gemini", agy:"Agy", or:"OpenRouter", kaggle:"Kaggle", muse:"Muse"};
+      const parts = Object.keys(vByV.all||{}).sort((a,b)=>(vByV.all[b]||0)-(vByV.all[a]||0))
+        .map(k => (disp[k]||k)+" "+(vByV.all[k]||0));
+      $("backlog-vsplit").textContent = parts.length ? "by validator: "+parts.join(" · ") : "–";
     } catch(e) { $("backlog-n").textContent = "?"; }
 
     const box = $("runs"); box.innerHTML = "";
