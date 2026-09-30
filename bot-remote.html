@@ -49,6 +49,10 @@
   #setup .card label { font-size:12px; color:var(--dim); }
   #setup .hint { font-size:12px; color:var(--dim); line-height:1.5; }
   .foot { text-align:center; color:var(--dim); font-size:11px; padding:14px 0 24px; }
+  .qbar { background:#1d2536; border-radius:8px; height:10px; overflow:hidden; margin-top:6px; }
+  .qbar > div { height:100%; border-radius:8px; transition:width .4s; }
+  .qrow { margin-bottom:10px; }
+  .qrow:last-child { margin-bottom:0; }
 </style>
 </head>
 <body>
@@ -81,6 +85,27 @@
     <h2>Pipeline</h2>
     <span class="pill grey" id="pipe-pill">…</span>
     <button class="bigbtn off" id="btn-toggle">…</button>
+  </div>
+
+  <div class="card">
+    <h2>Trading bot · paper</h2>
+    <span class="pill grey" id="bot-pill">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="b-equity">–</div><div class="k">equity</div></div>
+      <div class="stat"><div class="v" id="b-pnl">–</div><div class="k">realized P&amp;L</div></div>
+      <div class="stat"><div class="v" id="b-pos">–</div><div class="k">open pos</div></div>
+      <div class="stat"><div class="v" id="b-trades">–</div><div class="k">closed</div></div>
+      <div class="stat"><div class="v" id="b-kills">–</div><div class="k">kills</div></div>
+      <div class="stat"><div class="v" id="b-surv">–</div><div class="k">survivors</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--dim);margin-top:8px;" id="b-updated">—</div>
+  </div>
+
+  <div class="card">
+    <h2>Quota limits</h2>
+    <div class="qrow" id="quota-5h"></div>
+    <div class="qrow" id="quota-week"></div>
+    <div style="font-size:11px;color:var(--dim);margin-top:8px;">Auto-stop at 90% — the loop idles instead of burning the last 10%.</div>
   </div>
 
   <div class="card" id="card-claude">
@@ -166,6 +191,20 @@ function hideErr() { $("err").style.display="none"; }
 
 function pill(el, cls, txt) { el.className="pill "+cls; el.textContent=txt; }
 
+function renderQuota(id, label, win) {
+  const used = Math.round(win.percentUsed || 0);
+  const cls = used >= 90 ? "red" : (used >= 75 ? "amber" : "green");
+  const color = cls==="red" ? "var(--red)" : (cls==="amber" ? "var(--amber)" : "var(--green)");
+  let reset = "";
+  try { reset = new Date(win.resetsAt).toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}); }
+  catch(e) {}
+  $(id).innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
+    '<span>'+label+'</span><span class="pill '+cls+'">'+used+'% used'+(used>=90?' · STOPPED':'')+'</span></div>' +
+    '<div class="qbar"><div style="width:'+Math.min(used,100)+'%;background:'+color+'"></div></div>' +
+    (reset ? '<div style="font-size:11px;color:var(--dim);margin-top:4px;">resets '+reset+'</div>' : '');
+}
+
 function dayStats(rows, agent, day) {
   const f = rows.filter(r => r.agent===agent && (!day || r.ts.slice(0,10)===day));
   const s = {runs:f.length, ok:0, fail:0, cap:0, tin:0, tout:0, cand:0, last:null};
@@ -242,6 +281,32 @@ async function refresh() {
       box.appendChild(d);
     });
     if (!rows.length) box.innerHTML = '<div class="run"><span class="t">no runs logged yet</span></div>';
+
+    // trading bot status
+    try {
+      const bs = JSON.parse(await ghGet("bot-status.json"));
+      $("b-equity").textContent = "$"+Number(bs.equity).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+      const pnl = Number(bs.realized_pnl);
+      const pe = $("b-pnl");
+      pe.textContent = (pnl<0?"−$":"+$")+Math.abs(pnl).toFixed(2);
+      pe.style.color = pnl<0 ? "var(--red)" : "var(--green)";
+      $("b-pos").textContent = bs.open_positions;
+      $("b-trades").textContent = bs.trades_closed;
+      $("b-kills").textContent = bs.kill_tally;
+      $("b-surv").textContent = bs.survivors;
+      pill($("bot-pill"), "grey", "RESEARCH ONLY · no live entries");
+      $("b-updated").textContent = "updated "+(bs.updated_utc||"—");
+    } catch(e) { pill($("bot-pill"),"grey","no data yet"); }
+
+    // quota limits
+    try {
+      const q = JSON.parse(await ghGet("usage/quota-gpt.json"))[0];
+      renderQuota("quota-5h", "ChatGPT · 5h window", q.windows.primary);
+      renderQuota("quota-week", "ChatGPT · weekly", q.windows.secondary);
+    } catch(e) {
+      $("quota-5h").innerHTML = '<span style="font-size:12px;color:var(--dim)">quota meter unavailable</span>';
+      $("quota-week").innerHTML = "";
+    }
 
     $("updated").textContent = "updated "+new Date().toLocaleTimeString();
   } catch(e) {
