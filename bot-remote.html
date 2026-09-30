@@ -232,22 +232,10 @@
   </div>
 
   <div class="card" id="card-muse">
-    <h2>Muse · ops</h2>
+    <h2>Muse · ops check</h2>
     <span class="pill grey" id="pill-muse">…</span>
-    <div class="statgrid">
-      <div class="stat"><div class="v" id="u-runs">–</div><div class="k">runs · all time</div></div>
-      <div class="stat"><div class="v" id="u-tok">–</div><div class="k">tokens in/out</div></div>
-      <div class="stat"><div class="v" id="u-cap">–</div><div class="k">cap hits</div></div>
-      <div class="stat"><div class="v" id="u-cand">–</div><div class="k">candidates</div></div>
-      <div class="stat"><div class="v" id="u-verd">–</div><div class="k">verdicts</div></div>
-      <div class="stat"><div class="v" id="u-last">–</div><div class="k">last run</div></div>
-      <div class="stat"><div class="v" id="u-ok">–</div><div class="k">ok / fail</div></div>
-    </div>
-    <div class="act" id="act-u">💤 idle</div>
-    <div class="rowbtn">
-      <button id="btn-nap-muse">Nap 12h</button>
-      <button id="btn-wake-muse">Wake</button>
-    </div>
+    <div class="act">hourly: repo health · bot status · heartbeats</div>
+    <div class="act" id="muse-health">checking…</div>
   </div>
 
   <div class="card">
@@ -271,7 +259,7 @@
       <tr><td>agy</td><td id="w-a-runs">–</td><td id="w-a-ofc">–</td><td id="w-a-tok">–</td><td id="w-a-cand">–</td><td id="w-a-verd">–</td></tr>
       <tr><td>or</td><td id="w-o-runs">–</td><td id="w-o-ofc">–</td><td id="w-o-tok">–</td><td id="w-o-cand">–</td><td id="w-o-verd">–</td></tr>
       <tr><td>kaggle</td><td id="w-x-runs">–</td><td id="w-x-ofc">–</td><td id="w-x-tok">–</td><td id="w-x-cand">–</td><td id="w-x-verd">–</td></tr>
-      <tr><td>muse</td><td id="w-u-runs">–</td><td id="w-u-ofc">–</td><td id="w-u-tok">–</td><td id="w-u-cand">–</td><td id="w-u-verd">–</td></tr>
+      <tr><td><b>total</b></td><td id="w-t-runs">–</td><td id="w-t-ofc">–</td><td id="w-t-tok">–</td><td id="w-t-cand">–</td><td id="w-t-verd">–</td></tr>
     </table>
   </div>
 
@@ -363,7 +351,9 @@ function dayStats(rows, agent, day) {
   return s;
 }
 
-const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["x","kaggle"],["u","muse"]];
+const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["x","kaggle"]];
+// muse is ops-only (hourly health checks, no research stats) — it gets a
+// simple health card below instead of a stats row anywhere
 const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", x:"kaggle", u:"muse"};
 
 function resetHHMM(iso) {
@@ -537,6 +527,44 @@ async function refresh() {
       else actEl.textContent = "💤 idle";
     }
 
+    // usage totals: every agent still counts here, including muse
+    // (its own row is gone — the numbers live on in this row)
+    {
+      let nR=0, nOk=0, nFail=0, nCap=0, nTin=0, nTout=0, nCand=0;
+      for (const r of rows) {
+        if ((r.ts||"").slice(0,10) !== day) continue;
+        nR++;
+        if (r.status==="ok") nOk++; else if (r.status==="cap") nCap++; else nFail++;
+        nTin += parseInt(r.in_tok||"0",10)||0;
+        nTout += parseInt(r.out_tok||"0",10)||0;
+        nCand += parseInt(r.new_candidates||"0",10)||0;
+      }
+      $("w-t-runs").textContent = nR;
+      $("w-t-ofc").textContent = nOk+"/"+nFail+"/"+nCap;
+      $("w-t-tok").textContent = fmtN(nTin+nTout);
+      $("w-t-cand").textContent = nCand;
+      $("w-t-verd").textContent = vByV.d1 ? Object.values(vByV.d1).reduce((a,b)=>a+(b||0),0) : "–";
+    }
+
+    // Muse ops health: no run stats — just "is the hourly check alive?"
+    try {
+      const mact = JSON.parse(await ghGet("usage/activity-muse.json"));
+      const mAgeMin = (Date.now()/1000 - (mact.started||0)) / 60;
+      if (mAgeMin <= 90) {
+        pill($("pill-muse"), "green", "ALL GOOD");
+        $("muse-health").textContent = "✓ hourly check ran "+Math.max(1,Math.round(mAgeMin))+"m ago · "+String(mact.detail||"").slice(0,80);
+      } else if (mAgeMin <= 360) {
+        pill($("pill-muse"), "amber", "OVERDUE");
+        $("muse-health").textContent = "last check "+(Math.round(mAgeMin/60*10)/10)+"h ago — hourly loop may be late";
+      } else {
+        pill($("pill-muse"), "red", "STALE");
+        $("muse-health").textContent = "no check in "+Math.round(mAgeMin/60)+"h — hourly loop may be down";
+      }
+    } catch(e) {
+      pill($("pill-muse"), "grey", "NO DATA");
+      $("muse-health").textContent = "no heartbeat yet";
+    }
+
     // backlog: candidates with no verdict yet (one recursive tree call,
     // cached 5min — see TREE_CACHE)
     try {
@@ -572,7 +600,8 @@ async function refresh() {
     } catch(e) { $("backlog-n").textContent = "?"; }
 
     const box = $("runs"); box.innerHTML = "";
-    rows.slice(-12).reverse().forEach(r => {
+    // muse rows are ops noise, not research — the health card covers it
+    rows.filter(r => r.agent!=="muse").slice(-12).reverse().forEach(r => {
       const d = document.createElement("div"); d.className="run";
       const cls = r.status==="ok" ? "green" : (r.status==="cap" ? "amber" : "red");
       d.innerHTML = '<span class="t"></span><span class="a"></span><span class="pill '+cls+'"></span><span class="d"></span>';
