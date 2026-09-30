@@ -109,7 +109,12 @@
     <div class="qrow" id="quota-cweek"></div>
     <div class="qrow" id="quota-5h"></div>
     <div class="qrow" id="quota-week"></div>
-    <div style="font-size:11px;color:var(--dim);margin-top:8px;">Auto-stop at 90% — the loop idles instead of burning the last 10%.</div>
+    <div class="qrow" id="quota-or"></div>
+    <div class="qrow" id="quota-muse"></div>
+    <div class="qrow" id="quota-kaggle"></div>
+    <div class="qrow" id="quota-gemini"></div>
+    <div class="qrow" id="quota-agy"></div>
+    <div style="font-size:11px;color:var(--dim);margin-top:8px;">Claude &amp; ChatGPT auto-stop at 90% — the loop idles instead of burning the last 10%.</div>
   </div>
 
   <div class="card" id="card-claude">
@@ -331,7 +336,7 @@ function renderQuota(id, label, win) {
   const cls = used >= 90 ? "red" : (used >= 75 ? "amber" : "green");
   const color = cls==="red" ? "var(--red)" : (cls==="amber" ? "var(--amber)" : "var(--green)");
   let reset = "";
-  try { reset = new Date(win.resetsAt).toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}); }
+  try { const d = new Date(win.resetsAt); if (win.resetsAt && !isNaN(d)) reset = d.toLocaleString([], {month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"}); }
   catch(e) {}
   $(id).innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
@@ -362,6 +367,15 @@ function resetHHMM(iso) {
   catch(e) { return "?"; }
 }
 
+// Quota rows for agents with no machine-readable meter: show breaker state honestly.
+function quotaStatic(id, label, nappingUntil) {
+  const txt = nappingUntil ? "NAPPING until "+resetHHMM(new Date(nappingUntil*1000).toISOString())
+                           : "no meter · breaker armed";
+  $(id).innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
+    '<span>'+label+'</span><span class="pill '+(nappingUntil?"amber":"grey")+'">'+txt+'</span></div>';
+}
+
 function renderAgent(pfx, st, pausedUntil, pipeOn, note, working) {
   $(pfx+"-runs").textContent = st.runs;
   $(pfx+"-tok").textContent = fmtN(st.tin+st.tout);
@@ -382,10 +396,11 @@ function renderAgent(pfx, st, pausedUntil, pipeOn, note, working) {
   else pill(p,"green","WORKING");
 }
 
-// run-log timestamps look like "2026-09-30-000714" (UTC) — parse to ms
+// run-log timestamps are viewer-local "YYYY-MM-DD-HHMMSS" (kaggle rows are
+// converted from UTC at load) — parse to ms
 function tsMs(ts) {
   const m = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})(\d{2})/.exec(ts||"");
-  return m ? Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]) : NaN;
+  return m ? new Date(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]).getTime() : NaN;
 }
 
 async function refresh() {
@@ -415,6 +430,20 @@ async function refresh() {
       } catch(e) { /* missing log: fine */ }
     }
     rows.sort((a,b) => String(a.ts||"").localeCompare(String(b.ts||"")));
+
+    // Kaggle stamps UTC, the Mac agents stamp Detroit-local. Normalize kaggle
+    // rows to viewer-local so every ts below means local time.
+    for (const r of rows) {
+      if (r.agent === "kaggle") {
+        const m = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})(\d{2})/.exec(r.ts||"");
+        if (m) {
+          const d = new Date(Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]));
+          const p = n => String(n).padStart(2,"0");
+          r.ts = d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())+"-"
+               + p(d.getHours())+p(d.getMinutes())+p(d.getSeconds());
+        }
+      }
+    }
 
     // Verdict attribution: per-agent "verdicts" used to sum run-log
     // new_verdicts, which double-counts — 4 supervisors share one working
@@ -448,6 +477,9 @@ async function refresh() {
       if ((quotaGpt.windows.primary.percentUsed||0) >= 90)
         quotaNote.gpt = "QUOTA 90% · back ~"+resetHHMM(quotaGpt.windows.primary.resetsAt);
     } catch(e) {}
+    let quotaOr = null, quotaMuse = null;
+    try { quotaOr = JSON.parse(await ghGet("usage/quota-or.json")); } catch(e) {}
+    try { quotaMuse = JSON.parse(await ghGet("usage/quota-muse.json")); } catch(e) {}
 
     for (const [pfx, agent] of AGENTS) {
       const todayS = dayStats(rows, agent, day);  // today's run-log rows
@@ -571,6 +603,35 @@ async function refresh() {
       $("quota-5h").innerHTML = '<span style="font-size:12px;color:var(--dim)">quota meter unavailable</span>';
       $("quota-week").innerHTML = "";
     }
+    try {
+      renderQuota("quota-or", "OpenRouter · free requests/24h", quotaOr);
+    } catch(e) {
+      $("quota-or").innerHTML = '<span style="font-size:12px;color:var(--dim)">OpenRouter meter unavailable</span>';
+    }
+    try {
+      renderQuota("quota-muse", "Muse · weekly", quotaMuse);
+    } catch(e) {
+      $("quota-muse").innerHTML = '<span style="font-size:12px;color:var(--dim)">Muse meter unavailable</span>';
+    }
+    // Kaggle GPU quota: estimated from the kernel's own heartbeat accumulation
+    // (30 GPU-h/week free tier, resets Sunday 00:00 UTC). Appears once Gray
+    // switches to the notebook version that writes the gpu block.
+    try {
+      const kact = JSON.parse(await ghGet("usage/activity-kaggle.json"));
+      const gpu = kact.gpu;
+      if (gpu && isFinite(gpu.seconds)) {
+        const usedH = gpu.seconds/3600, QUOTA_H = 30;
+        const pct = Math.max(0, Math.min(100, Math.round(usedH/QUOTA_H*100)));
+        const wk = new Date((gpu.week||0)*1000).toLocaleDateString("en-US",{month:"short",day:"numeric"});
+        $("quota-kaggle").innerHTML =
+          '<div class="qrow"><span class="qname">Kaggle · GPU (est.)</span>'+
+          '<span class="qbar"><span class="qfill" style="width:'+pct+'%"></span></span>'+
+          '<span class="qpct">'+usedH.toFixed(1)+" / "+QUOTA_H+"h</span></div>"+
+          '<div class="qreset">week of '+wk+" · free tier · resets Sun 00:00 UTC</div>";
+      } else $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle · GPU — waiting for notebook switch</span>';
+    } catch(e) { $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle GPU meter unavailable</span>'; }
+    quotaStatic("quota-gemini", "Gemini · free tier", paused.gemini);
+    quotaStatic("quota-agy", "Agy · free tier", paused.agy);
 
     $("updated").textContent = "updated "+new Date().toLocaleTimeString();
   } catch(e) {
