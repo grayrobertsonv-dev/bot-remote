@@ -61,12 +61,13 @@
   <header><h1>BOT REMOTE</h1></header>
   <div class="card">
     <h2>Connect</h2>
-    <label>GitHub repo (owner/name)</label>
-    <input id="in-repo" placeholder="you/claude-bot-research" autocomplete="off">
     <label>Personal access token</label>
     <input id="in-pat" type="password" placeholder="ghp_…" autocomplete="off">
-    <div class="hint">Classic token with the <b>repo</b> scope (github.com → Settings → Developer settings → Tokens). It stays on this phone only — saved in this browser, sent only to api.github.com.</div>
+    <div class="hint">Classic token with the <b>repo</b> scope (github.com → Settings → Developer settings → Tokens). It stays on this phone only — saved in this browser, sent only to api.github.com. After connecting, bookmark this page (or re-add it to your home screen) so the token survives if iOS wipes saved data.</div>
     <button class="bigbtn on" id="btn-save">Connect</button>
+  </div>
+  <div class="card" id="card-forget" hidden>
+    <button class="bigbtn off" id="btn-forget">Forget token &amp; sign out</button>
   </div>
 </div>
 
@@ -164,8 +165,18 @@
 <script>
 "use strict";
 const $ = id => document.getElementById(id);
+// repo is fixed — no reason to make anyone type it
+const GH_REPO = "grayrobertsonv-dev/claude-bot-research";
 let CFG = {};
 try { CFG = JSON.parse(localStorage.getItem("botremote") || "{}"); } catch(e) { CFG = {}; }
+// token also lives in the URL hash (#t=...) — restored silently if iOS wipes
+// saved data, as long as the bookmark/home-screen icon was saved after connecting
+if (!CFG.pat && location.hash.indexOf("#t=") === 0) {
+  try {
+    CFG.pat = decodeURIComponent(location.hash.slice(3));
+    localStorage.setItem("botremote", JSON.stringify(CFG));
+  } catch(e) {}
+}
 let PIPE_SHA = null, PIPE_ON = false;
 
 const b64d = s => decodeURIComponent(escape(atob(String(s).replace(/\s/g,""))));
@@ -174,7 +185,7 @@ const fmtN = n => n >= 1000 ? (n/1000).toFixed(1)+"k" : String(n);
 const hhmm = ts => ts.length >= 15 ? ts.slice(11,13)+":"+ts.slice(13,15) : ts;
 
 async function gh(path, method, body) {
-  const r = await fetch("https://api.github.com/repos/"+CFG.repo+"/contents/"+path, {
+  const r = await fetch("https://api.github.com/repos/"+GH_REPO+"/contents/"+path, {
     method: method || "GET",
     headers: Object.assign(
       {"Authorization":"Bearer "+CFG.pat, "Accept":"application/vnd.github+json"},
@@ -320,7 +331,7 @@ async function refresh() {
 
     $("updated").textContent = "updated "+new Date().toLocaleTimeString();
   } catch(e) {
-    showErr("Couldn't reach the repo: "+e.message+". Check repo name, token, and connection, then tap ⚙.");
+    showErr("Couldn't reach the repo: "+e.message+". Check the token and connection, then tap ⚙.");
   }
   $("btn-refresh").textContent = "⟳";
 }
@@ -356,15 +367,27 @@ async function wake(agent) {
   }
 }
 
-function showSetup() { $("setup").hidden=false; $("app").hidden=true; $("in-repo").value=CFG.repo||""; }
+function showSetup() {
+  $("setup").hidden = false; $("app").hidden = true;
+  $("card-forget").hidden = !CFG.pat;
+}
 function showApp() { $("setup").hidden=true; $("app").hidden=false; refresh(); }
 
 $("btn-save").onclick = () => {
-  CFG = {repo:$("in-repo").value.trim(), pat:$("in-pat").value.trim()};
-  if (!CFG.repo || !CFG.pat) { alert("Enter both repo and token."); return; }
+  const pat = $("in-pat").value.trim();
+  if (!pat) { alert("Paste your token."); return; }
+  CFG = {pat: pat};
   try { localStorage.setItem("botremote", JSON.stringify(CFG)); } catch(e) {}
+  // persist in URL hash too — bookmark/home-screen icon keeps it across iOS wipes
+  try { location.hash = "t=" + encodeURIComponent(pat); } catch(e) {}
   $("in-pat").value = "";
   showApp();
+};
+$("btn-forget").onclick = () => {
+  CFG = {};
+  try { localStorage.removeItem("botremote"); } catch(e) {}
+  try { history.replaceState(null, "", location.pathname + location.search); } catch(e) {}
+  showSetup();
 };
 $("btn-settings").onclick = showSetup;
 $("btn-refresh").onclick = refresh;
@@ -374,7 +397,7 @@ $("btn-wake-claude").onclick = () => wake("claude");
 $("btn-nap-gpt").onclick = () => nap("gpt");
 $("btn-wake-gpt").onclick = () => wake("gpt");
 
-if (CFG.repo && CFG.pat) showApp(); else showSetup();
+if (CFG.pat) showApp(); else showSetup();
 setInterval(() => { if (!$("app").hidden && !document.hidden) refresh(); }, 60000);
 </script>
 </body>
