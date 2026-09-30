@@ -205,7 +205,13 @@ function hideErr() { $("err").style.display="none"; }
 function pill(el, cls, txt) { el.className="pill "+cls; el.textContent=txt; }
 
 function renderQuota(id, label, win) {
-  const used = Math.round(win.percentUsed || 0);
+  if (win.percentUsed === null || win.percentUsed === undefined) {
+    $(id).innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
+      '<span>'+label+'</span><span class="pill grey">n/a</span></div>';
+    return;
+  }
+  const used = Math.round(win.percentUsed);
   const cls = used >= 90 ? "red" : (used >= 75 ? "amber" : "green");
   const color = cls==="red" ? "var(--red)" : (cls==="amber" ? "var(--amber)" : "var(--green)");
   let reset = "";
