@@ -423,10 +423,9 @@ async function refresh() {
         }
       } catch(e) { /* missing log: fine */ }
     }
-    rows.sort((a,b) => String(a.ts||"").localeCompare(String(b.ts||"")));
-
     // Kaggle stamps UTC, the Mac agents stamp Detroit-local. Normalize kaggle
-    // rows to viewer-local so every ts below means local time.
+    // rows to viewer-local BEFORE sorting, so the merged list is chronological
+    // (2026-09-30: sorting first left every kaggle row stamped 4h ahead).
     for (const r of rows) {
       if (r.agent === "kaggle") {
         const m = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})(\d{2})/.exec(r.ts||"");
@@ -438,6 +437,7 @@ async function refresh() {
         }
       }
     }
+    rows.sort((a,b) => String(a.ts||"").localeCompare(String(b.ts||"")));
 
     // Verdict attribution: per-agent "verdicts" used to sum run-log
     // new_verdicts, which double-counts — 4 supervisors share one working
