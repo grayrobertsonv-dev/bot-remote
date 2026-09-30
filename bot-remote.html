@@ -835,7 +835,7 @@ async function refresh() {
 
     const box = $("runs"); box.innerHTML = "";
     // muse rows are ops noise, not research — the health card covers it
-    rows.filter(r => r.agent!=="muse").slice(-12).reverse().forEach(r => {
+    rows.filter(r => r.agent!=="muse" && r.status!=="idle").slice(-12).reverse().forEach(r => {
       const d = document.createElement("div"); d.className="run";
       const cls = r.status==="ok" ? "green" : (r.status==="cap" ? "amber" : (r.status==="idle" ? "grey" : "red"));
       d.innerHTML = '<span class="t"></span><span class="a"></span><span class="pill '+cls+'"></span><span class="d"></span>';
