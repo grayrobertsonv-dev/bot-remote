@@ -120,6 +120,7 @@
       <div class="stat"><div class="v" id="c-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="c-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="c-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="c-verd">–</div><div class="k">verdicts</div></div>
       <div class="stat"><div class="v" id="c-last">–</div><div class="k">last run</div></div>
       <div class="stat"><div class="v" id="c-ok">–</div><div class="k">ok / fail</div></div>
     </div>
@@ -138,6 +139,7 @@
       <div class="stat"><div class="v" id="g-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="g-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="g-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="g-verd">–</div><div class="k">verdicts</div></div>
       <div class="stat"><div class="v" id="g-last">–</div><div class="k">last run</div></div>
       <div class="stat"><div class="v" id="g-ok">–</div><div class="k">ok / fail</div></div>
     </div>
@@ -156,6 +158,7 @@
       <div class="stat"><div class="v" id="m-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="m-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="m-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="m-verd">–</div><div class="k">verdicts</div></div>
       <div class="stat"><div class="v" id="m-last">–</div><div class="k">last run</div></div>
       <div class="stat"><div class="v" id="m-ok">–</div><div class="k">ok / fail</div></div>
     </div>
@@ -174,6 +177,7 @@
       <div class="stat"><div class="v" id="a-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="a-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="a-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="a-verd">–</div><div class="k">verdicts</div></div>
       <div class="stat"><div class="v" id="a-last">–</div><div class="k">last run</div></div>
       <div class="stat"><div class="v" id="a-ok">–</div><div class="k">ok / fail</div></div>
     </div>
@@ -192,6 +196,7 @@
       <div class="stat"><div class="v" id="o-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="o-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="o-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="o-verd">–</div><div class="k">verdicts</div></div>
       <div class="stat"><div class="v" id="o-last">–</div><div class="k">last run</div></div>
       <div class="stat"><div class="v" id="o-ok">–</div><div class="k">ok / fail</div></div>
     </div>
@@ -199,24 +204,6 @@
     <div class="rowbtn">
       <button id="btn-nap-or">Nap 12h</button>
       <button id="btn-wake-or">Wake</button>
-    </div>
-  </div>
-
-  <div class="card" id="card-grok">
-    <h2>Grok · researcher</h2>
-    <span class="pill grey" id="pill-grok">…</span>
-    <div class="statgrid">
-      <div class="stat"><div class="v" id="k-runs">–</div><div class="k">runs today</div></div>
-      <div class="stat"><div class="v" id="k-tok">–</div><div class="k">tokens in/out</div></div>
-      <div class="stat"><div class="v" id="k-cap">–</div><div class="k">cap hits</div></div>
-      <div class="stat"><div class="v" id="k-cand">–</div><div class="k">candidates</div></div>
-      <div class="stat"><div class="v" id="k-last">–</div><div class="k">last run</div></div>
-      <div class="stat"><div class="v" id="k-ok">–</div><div class="k">ok / fail</div></div>
-    </div>
-    <div class="act" id="act-k">💤 idle</div>
-    <div class="rowbtn">
-      <button id="btn-nap-grok">Nap 12h</button>
-      <button id="btn-wake-grok">Wake</button>
     </div>
   </div>
 
@@ -228,6 +215,7 @@
       <div class="stat"><div class="v" id="x-tok">–</div><div class="k">tokens in/out</div></div>
       <div class="stat"><div class="v" id="x-cap">–</div><div class="k">cap hits</div></div>
       <div class="stat"><div class="v" id="x-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="x-verd">–</div><div class="k">verdicts</div></div>
       <div class="stat"><div class="v" id="x-last">–</div><div class="k">last run</div></div>
       <div class="stat"><div class="v" id="x-ok">–</div><div class="k">ok / fail</div></div>
     </div>
@@ -251,14 +239,13 @@
   <div class="card">
     <h2>Usage · last 7 days</h2>
     <table>
-      <tr><th>agent</th><th>runs</th><th>ok/fail/cap</th><th>tokens</th><th>cand</th></tr>
-      <tr><td>claude</td><td id="w-c-runs">–</td><td id="w-c-ofc">–</td><td id="w-c-tok">–</td><td id="w-c-cand">–</td></tr>
-      <tr><td>gpt</td><td id="w-g-runs">–</td><td id="w-g-ofc">–</td><td id="w-g-tok">–</td><td id="w-g-cand">–</td></tr>
-      <tr><td>gemini</td><td id="w-m-runs">–</td><td id="w-m-ofc">–</td><td id="w-m-tok">–</td><td id="w-m-cand">–</td></tr>
-      <tr><td>agy</td><td id="w-a-runs">–</td><td id="w-a-ofc">–</td><td id="w-a-tok">–</td><td id="w-a-cand">–</td></tr>
-      <tr><td>or</td><td id="w-o-runs">–</td><td id="w-o-ofc">–</td><td id="w-o-tok">–</td><td id="w-o-cand">–</td></tr>
-      <tr><td>grok</td><td id="w-k-runs">–</td><td id="w-k-ofc">–</td><td id="w-k-tok">–</td><td id="w-k-cand">–</td></tr>
-      <tr><td>kaggle</td><td id="w-x-runs">–</td><td id="w-x-ofc">–</td><td id="w-x-tok">–</td><td id="w-x-cand">–</td></tr>
+      <tr><th>agent</th><th>runs</th><th>ok/fail/cap</th><th>tokens</th><th>cand</th><th>verd</th></tr>
+      <tr><td>claude</td><td id="w-c-runs">–</td><td id="w-c-ofc">–</td><td id="w-c-tok">–</td><td id="w-c-cand">–</td><td id="w-c-verd">–</td></tr>
+      <tr><td>gpt</td><td id="w-g-runs">–</td><td id="w-g-ofc">–</td><td id="w-g-tok">–</td><td id="w-g-cand">–</td><td id="w-g-verd">–</td></tr>
+      <tr><td>gemini</td><td id="w-m-runs">–</td><td id="w-m-ofc">–</td><td id="w-m-tok">–</td><td id="w-m-cand">–</td><td id="w-m-verd">–</td></tr>
+      <tr><td>agy</td><td id="w-a-runs">–</td><td id="w-a-ofc">–</td><td id="w-a-tok">–</td><td id="w-a-cand">–</td><td id="w-a-verd">–</td></tr>
+      <tr><td>or</td><td id="w-o-runs">–</td><td id="w-o-ofc">–</td><td id="w-o-tok">–</td><td id="w-o-cand">–</td><td id="w-o-verd">–</td></tr>
+      <tr><td>kaggle</td><td id="w-x-runs">–</td><td id="w-x-ofc">–</td><td id="w-x-tok">–</td><td id="w-x-cand">–</td><td id="w-x-verd">–</td></tr>
     </table>
   </div>
 
@@ -334,39 +321,50 @@ function renderQuota(id, label, win) {
 
 function dayStats(rows, agent, day) {
   const f = rows.filter(r => r.agent===agent && (!day || r.ts.slice(0,10)===day));
-  const s = {runs:f.length, ok:0, fail:0, cap:0, tin:0, tout:0, cand:0, last:null};
+  const s = {runs:f.length, ok:0, fail:0, cap:0, tin:0, tout:0, cand:0, verd:0, last:null};
   for (const r of f) {
     if (r.status==="ok") s.ok++; else if (r.status==="cap") s.cap++; else s.fail++;
     s.tin += parseInt(r.in_tok||"0",10)||0;
     s.tout += parseInt(r.out_tok||"0",10)||0;
     s.cand += parseInt(r.new_candidates||"0",10)||0;
+    s.verd += parseInt(r.new_verdicts||"0",10)||0;
     if (!s.last || r.ts > s.last.ts) s.last = r;
   }
   return s;
 }
 
-const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["k","grok"],["x","kaggle"]];
-const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", k:"grok", x:"kaggle"};
+const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["x","kaggle"]];
+const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", x:"kaggle"};
 
 function resetHHMM(iso) {
   try { return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
   catch(e) { return "?"; }
 }
 
-function renderAgent(pfx, st, pausedUntil, pipeOn, note) {
+function renderAgent(pfx, st, pausedUntil, pipeOn, note, working) {
   $(pfx+"-runs").textContent = st.runs;
   $(pfx+"-tok").textContent = fmtN(st.tin+st.tout);
   $(pfx+"-cap").textContent = st.cap;
   $(pfx+"-cand").textContent = st.cand;
+  $(pfx+"-verd").textContent = st.verd;
   $(pfx+"-last").textContent = st.last ? hhmm(st.last.ts) : "—";
   $(pfx+"-ok").textContent = st.ok+"/"+st.fail;
   const p = $("pill-"+AGENT_OF[pfx]);
   if (!pipeOn) pill(p,"grey","OFF · pipeline off");
   else if (pausedUntil) {
     const d = new Date(pausedUntil*1000);
-    pill(p,"amber","NAPPING until "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"));
+    const md = d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    const hm = String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+    pill(p,"amber","NAPPING until "+md+" "+hm);
   } else if (note) pill(p,"amber",note);
+  else if (!working) pill(p,"grey","IDLE");
   else pill(p,"green","WORKING");
+}
+
+// run-log timestamps look like "2026-09-30-000714" (UTC) — parse to ms
+function tsMs(ts) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})(\d{2})/.exec(ts||"");
+  return m ? Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]) : NaN;
 }
 
 async function refresh() {
@@ -413,25 +411,40 @@ async function refresh() {
 
     for (const [pfx, agent] of AGENTS) {
       const s = dayStats(rows, agent, day);
-      renderAgent(pfx, s, paused[agent], PIPE_ON, quotaNote[agent]);
       const w = dayStats(rows, agent, null);
+
+      // live activity: what this agent is doing RIGHT NOW (pushed at run
+      // start; researcher/validator heartbeats older than 30min read as
+      // idle — it's napping, parked, or off; mode "idle" is a deliberate
+      // parked state with its own reason, shown as-is)
+      let actMode = null, actAgeMin = Infinity, actDetail = "";
+      try {
+        const act = JSON.parse(await ghGet("usage/activity-"+agent+".json"));
+        actMode = act.mode || null;
+        actDetail = act.detail || "";
+        actAgeMin = (Date.now()/1000 - (act.started||0)) / 60;
+      } catch(e) {}
+      let runAgeMin = Infinity;
+      if (w.last && !isNaN(tsMs(w.last.ts))) runAgeMin = (Date.now() - tsMs(w.last.ts)) / 60000;
+      const hbFresh = (actMode === "researcher" || actMode === "validator") && actAgeMin <= 30;
+      const runFresh = runAgeMin <= 60;
+      const working = hbFresh || runFresh;
+
+      renderAgent(pfx, s, paused[agent], PIPE_ON, quotaNote[agent], working);
       $("w-"+pfx+"-runs").textContent = w.runs;
       $("w-"+pfx+"-ofc").textContent = w.ok+"/"+w.fail+"/"+w.cap;
       $("w-"+pfx+"-tok").textContent = fmtN(w.tin+w.tout);
       $("w-"+pfx+"-cand").textContent = w.cand;
-      // live activity: what this agent is doing RIGHT NOW (pushed at run
-      // start; stale >30min reads as idle — it's napping, parked, or off)
+      $("w-"+pfx+"-verd").textContent = w.verd;
       const actEl = $("act-"+pfx);
-      try {
-        const act = JSON.parse(await ghGet("usage/activity-"+agent+".json"));
-        const ageMin = Math.round(Date.now()/1000 - (act.started||0));
-        if (ageMin > 1800) actEl.textContent = "💤 idle";
-        else {
-          const icon = act.mode === "validator" ? "⚙️" : "💡";
-          const what = act.mode === "validator" ? "validating" : "researching";
-          actEl.textContent = icon+" "+what+" · "+String(act.detail||"").slice(0,70)+" · "+Math.max(1,Math.round(ageMin/60))+"m";
-        }
-      } catch(e) { actEl.textContent = "💤 idle"; }
+      if (actMode === "idle") actEl.textContent = "⏸️ " + String(actDetail).slice(0, 80);
+      else if (hbFresh) {
+        const icon = actMode === "validator" ? "⚙️" : "💡";
+        const what = actMode === "validator" ? "validating" : "researching";
+        actEl.textContent = icon+" "+what+" · "+String(actDetail).slice(0,70)+" · "+Math.max(1,Math.round(actAgeMin))+"m";
+      }
+      else if (runFresh) actEl.textContent = "✓ run done "+Math.max(1,Math.round(runAgeMin))+"m ago";
+      else actEl.textContent = "💤 idle";
     }
 
     // backlog: candidates with no verdict yet (one recursive tree call)
