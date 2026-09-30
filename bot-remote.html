@@ -299,11 +299,14 @@ if (!CFG.pat && location.hash.indexOf("#t=") === 0) {
   } catch(e) {}
 }
 let PIPE_SHA = null, PIPE_ON = false;
+// backlog tree is cached 5min — candidates/verdicts change on run cadence,
+// and this is the heaviest call in refresh()
+let TREE_CACHE = {at: 0, tree: null};
 
 const b64d = s => decodeURIComponent(escape(atob(String(s).replace(/\s/g,""))));
 const b64e = s => btoa(unescape(encodeURIComponent(s)));
 const fmtN = n => n >= 1000 ? (n/1000).toFixed(1)+"k" : String(n);
-const hhmm = ts => ts.length >= 15 ? ts.slice(11,13)+":"+ts.slice(13,15) : ts;
+const hhmm = ts => { ts = ts||""; return ts.length >= 15 ? ts.slice(11,13)+":"+ts.slice(13,15) : (ts||"—"); };
 
 async function gh(path, method, body) {
   const r = await fetch("https://api.github.com/repos/"+GH_REPO+"/contents/"+path, {
@@ -346,7 +349,8 @@ function renderQuota(id, label, win) {
 }
 
 function dayStats(rows, agent, day) {
-  const f = rows.filter(r => r.agent===agent && (!day || r.ts.slice(0,10)===day));
+  // (r.ts||"") — one malformed row without a ts must not kill the whole page
+  const f = rows.filter(r => r.agent===agent && (!day || (r.ts||"").slice(0,10)===day));
   const s = {runs:f.length, ok:0, fail:0, cap:0, tin:0, tout:0, cand:0, verd:0, last:null};
   for (const r of f) {
     if (r.status==="ok") s.ok++; else if (r.status==="cap") s.cap++; else s.fail++;
@@ -533,10 +537,16 @@ async function refresh() {
       else actEl.textContent = "💤 idle";
     }
 
-    // backlog: candidates with no verdict yet (one recursive tree call)
+    // backlog: candidates with no verdict yet (one recursive tree call,
+    // cached 5min — see TREE_CACHE)
     try {
-      const tr = await (await fetch("https://api.github.com/repos/"+GH_REPO+"/git/trees/main?recursive=1",
-        {headers:{"Authorization":"Bearer "+CFG.pat, "Accept":"application/vnd.github+json"}})).json();
+      let tr;
+      if (Date.now() - TREE_CACHE.at < 5*60*1000 && TREE_CACHE.tree) tr = TREE_CACHE.tree;
+      else {
+        tr = await (await fetch("https://api.github.com/repos/"+GH_REPO+"/git/trees/main?recursive=1",
+          {headers:{"Authorization":"Bearer "+CFG.pat, "Accept":"application/vnd.github+json"}})).json();
+        TREE_CACHE = {at: Date.now(), tree: tr};
+      }
       const cands = [], verdicts = new Set();
       for (const t of (tr.tree||[])) {
         if (t.type !== "blob") continue;
@@ -546,8 +556,10 @@ async function refresh() {
           verdicts.add(t.path.slice("results/verdict-".length));
       }
       const waiting = cands.filter(c => !verdicts.has(c)).sort();
-      $("backlog-n").textContent = waiting.length;
-      $("backlog-verd").textContent = verdicts.size;
+      // truncated tree = silently low counts; mark it instead of lying
+      const approx = tr.truncated ? "~" : "";
+      $("backlog-n").textContent = approx + waiting.length;
+      $("backlog-verd").textContent = approx + verdicts.size;
       $("backlog-oldest").textContent = waiting.length ? waiting[0].slice(0,24)+"…" : "—";
       $("backlog-list").textContent = waiting.length
         ? "waiting: "+waiting.slice(0,5).join(", ")+(waiting.length>5 ? " +"+(waiting.length-5)+" more" : "")
@@ -565,9 +577,9 @@ async function refresh() {
       const cls = r.status==="ok" ? "green" : (r.status==="cap" ? "amber" : "red");
       d.innerHTML = '<span class="t"></span><span class="a"></span><span class="pill '+cls+'"></span><span class="d"></span>';
       d.children[0].textContent = hhmm(r.ts);
-      d.children[1].textContent = r.agent;
-      d.children[2].textContent = r.status.toUpperCase();
-      d.children[3].textContent = (r.dur_s||0)+"s · "+(r.new_candidates||0)+" cand";
+      d.children[1].textContent = r.agent||"?";
+      d.children[2].textContent = (r.status||"?").toUpperCase();
+      d.children[3].textContent = (r.dur_s||0)+"s · "+(r.new_candidates||0)+"c/"+(r.new_verdicts||0)+"v";
       box.appendChild(d);
     });
     if (!rows.length) box.innerHTML = '<div class="run"><span class="t">no runs logged yet</span></div>';
@@ -603,8 +615,18 @@ async function refresh() {
       $("quota-5h").innerHTML = '<span style="font-size:12px;color:var(--dim)">quota meter unavailable</span>';
       $("quota-week").innerHTML = "";
     }
+    // OpenRouter: the key endpoint exposes only a short-term rate limit
+    // (requests=-1), not a daily budget — a percent bar would be fiction.
+    // Show real activity instead.
     try {
-      renderQuota("quota-or", "OpenRouter · free requests/24h", quotaOr);
+      if (quotaOr && quotaOr.runs_24h !== null && quotaOr.runs_24h !== undefined) {
+        $("quota-or").innerHTML =
+          '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
+          '<span>OpenRouter · free</span><span class="pill grey">'+quotaOr.runs_24h+' runs/24h</span></div>' +
+          '<div style="font-size:11px;color:var(--dim);margin-top:4px;">no quota meter — key endpoint exposes no daily budget</div>';
+      } else {
+        $("quota-or").innerHTML = '<span style="font-size:12px;color:var(--dim)">OpenRouter meter unavailable</span>';
+      }
     } catch(e) {
       $("quota-or").innerHTML = '<span style="font-size:12px;color:var(--dim)">OpenRouter meter unavailable</span>';
     }
@@ -616,18 +638,22 @@ async function refresh() {
     // Kaggle GPU quota: estimated from the kernel's own heartbeat accumulation
     // (30 GPU-h/week free tier, resets Sunday 00:00 UTC). Appears once Gray
     // switches to the notebook version that writes the gpu block.
+    // NOTE: uses the same markup as renderQuota — the stylesheet only defines
+    // .qbar/.qbar>div, so custom classes (qname/qfill/qpct/qreset) render broken.
     try {
       const kact = JSON.parse(await ghGet("usage/activity-kaggle.json"));
       const gpu = kact.gpu;
       if (gpu && isFinite(gpu.seconds)) {
         const usedH = gpu.seconds/3600, QUOTA_H = 30;
         const pct = Math.max(0, Math.min(100, Math.round(usedH/QUOTA_H*100)));
+        const kcls = pct >= 90 ? "red" : (pct >= 75 ? "amber" : "green");
+        const kcolor = kcls==="red" ? "var(--red)" : (kcls==="amber" ? "var(--amber)" : "var(--green)");
         const wk = new Date((gpu.week||0)*1000).toLocaleDateString("en-US",{month:"short",day:"numeric"});
         $("quota-kaggle").innerHTML =
-          '<div class="qrow"><span class="qname">Kaggle · GPU (est.)</span>'+
-          '<span class="qbar"><span class="qfill" style="width:'+pct+'%"></span></span>'+
-          '<span class="qpct">'+usedH.toFixed(1)+" / "+QUOTA_H+"h</span></div>"+
-          '<div class="qreset">week of '+wk+" · free tier · resets Sun 00:00 UTC</div>";
+          '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
+          '<span>Kaggle · GPU (est.)</span><span class="pill '+kcls+'">'+usedH.toFixed(1)+' / '+QUOTA_H+'h</span></div>' +
+          '<div class="qbar"><div style="width:'+pct+'%;background:'+kcolor+'"></div></div>' +
+          '<div style="font-size:11px;color:var(--dim);margin-top:4px;">week of '+wk+' · free tier · resets Sun 00:00 UTC</div>';
       } else $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle · GPU — waiting for notebook switch</span>';
     } catch(e) { $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle GPU meter unavailable</span>'; }
     quotaStatic("quota-gemini", "Gemini · free tier", paused.gemini);
