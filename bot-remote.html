@@ -103,6 +103,8 @@
 
   <div class="card">
     <h2>Quota limits</h2>
+    <div class="qrow" id="quota-c5h"></div>
+    <div class="qrow" id="quota-cweek"></div>
     <div class="qrow" id="quota-5h"></div>
     <div class="qrow" id="quota-week"></div>
     <div style="font-size:11px;color:var(--dim);margin-top:8px;">Auto-stop at 90% — the loop idles instead of burning the last 10%.</div>
@@ -299,6 +301,14 @@ async function refresh() {
     } catch(e) { pill($("bot-pill"),"grey","no data yet"); }
 
     // quota limits
+    try {
+      const qc = JSON.parse(await ghGet("usage/quota-claude.json"));
+      renderQuota("quota-c5h", "Claude · 5h window", {percentUsed: qc.five_hour.used, resetsAt: qc.five_hour.resets_at});
+      renderQuota("quota-cweek", "Claude · weekly", {percentUsed: qc.seven_day.used, resetsAt: qc.seven_day.resets_at});
+    } catch(e) {
+      $("quota-c5h").innerHTML = '<span style="font-size:12px;color:var(--dim)">Claude quota unavailable</span>';
+      $("quota-cweek").innerHTML = "";
+    }
     try {
       const q = JSON.parse(await ghGet("usage/quota-gpt.json"))[0];
       renderQuota("quota-5h", "ChatGPT · 5h window", q.windows.primary);
