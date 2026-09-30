@@ -145,12 +145,48 @@
     </div>
   </div>
 
+  <div class="card" id="card-gemini">
+    <h2>Gemini · researcher</h2>
+    <span class="pill grey" id="pill-gemini">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="m-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="m-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="m-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="m-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="m-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="m-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="rowbtn">
+      <button id="btn-nap-gemini">Nap 12h</button>
+      <button id="btn-wake-gemini">Wake</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-agy">
+    <h2>Agy · researcher</h2>
+    <span class="pill grey" id="pill-agy">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="a-runs">–</div><div class="k">runs today</div></div>
+      <div class="stat"><div class="v" id="a-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="a-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="a-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="a-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="a-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="rowbtn">
+      <button id="btn-nap-agy">Nap 12h</button>
+      <button id="btn-wake-agy">Wake</button>
+    </div>
+  </div>
+
   <div class="card">
     <h2>Usage · last 7 days</h2>
     <table>
       <tr><th>agent</th><th>runs</th><th>ok/fail/cap</th><th>tokens</th><th>cand</th></tr>
       <tr><td>claude</td><td id="w-c-runs">–</td><td id="w-c-ofc">–</td><td id="w-c-tok">–</td><td id="w-c-cand">–</td></tr>
       <tr><td>gpt</td><td id="w-g-runs">–</td><td id="w-g-ofc">–</td><td id="w-g-tok">–</td><td id="w-g-cand">–</td></tr>
+      <tr><td>gemini</td><td id="w-m-runs">–</td><td id="w-m-ofc">–</td><td id="w-m-tok">–</td><td id="w-m-cand">–</td></tr>
+      <tr><td>agy</td><td id="w-a-runs">–</td><td id="w-a-ofc">–</td><td id="w-a-tok">–</td><td id="w-a-cand">–</td></tr>
     </table>
   </div>
 
@@ -237,19 +273,28 @@ function dayStats(rows, agent, day) {
   return s;
 }
 
-function renderAgent(pfx, st, pausedUntil, pipeOn) {
+const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"]];
+const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy"};
+
+function resetHHMM(iso) {
+  try { return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
+  catch(e) { return "?"; }
+}
+
+function renderAgent(pfx, st, pausedUntil, pipeOn, note) {
   $(pfx+"-runs").textContent = st.runs;
   $(pfx+"-tok").textContent = fmtN(st.tin+st.tout);
   $(pfx+"-cap").textContent = st.cap;
   $(pfx+"-cand").textContent = st.cand;
   $(pfx+"-last").textContent = st.last ? hhmm(st.last.ts) : "—";
   $(pfx+"-ok").textContent = st.ok+"/"+st.fail;
-  const p = $("pill-"+(pfx==="c"?"claude":"gpt"));
+  const p = $("pill-"+AGENT_OF[pfx]);
   if (!pipeOn) pill(p,"grey","OFF · pipeline off");
   else if (pausedUntil) {
     const d = new Date(pausedUntil*1000);
     pill(p,"amber","NAPPING until "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"));
-  } else pill(p,"green","WORKING");
+  } else if (note) pill(p,"amber",note);
+  else pill(p,"green","WORKING");
 }
 
 async function refresh() {
@@ -261,7 +306,7 @@ async function refresh() {
     PIPE_ON = b64d(swf.content).split("\n")[0].trim() === "# ON";
 
     const nowS = Date.now()/1000, paused = {};
-    for (const a of ["claude","gpt"]) {
+    for (const a of ["claude","gpt","gemini","agy"]) {
       try { const u = parseInt((await ghGet("usage/paused-"+a+"-until")).trim(),10); paused[a] = u > nowS ? u : 0; }
       catch(e) { paused[a] = 0; }
     }
@@ -278,15 +323,31 @@ async function refresh() {
     else { pill(pp,"grey","OFF"); bt.className="bigbtn on"; bt.textContent="TURN ON"; }
 
     const today = new Date(); const day = today.getFullYear()+"-"+String(today.getMonth()+1).padStart(2,"0")+"-"+String(today.getDate()).padStart(2,"0");
-    const sc = dayStats(rows,"claude",day), sg = dayStats(rows,"gpt",day);
-    renderAgent("c", sc, paused.claude, PIPE_ON);
-    renderAgent("g", sg, paused.gpt, PIPE_ON);
 
-    const wc = dayStats(rows,"claude",null), wg = dayStats(rows,"gpt",null);
-    $("w-c-runs").textContent=wc.runs; $("w-c-ofc").textContent=wc.ok+"/"+wc.fail+"/"+wc.cap;
-    $("w-c-tok").textContent=fmtN(wc.tin+wc.tout); $("w-c-cand").textContent=wc.cand;
-    $("w-g-runs").textContent=wg.runs; $("w-g-ofc").textContent=wg.ok+"/"+wg.fail+"/"+wg.cap;
-    $("w-g-tok").textContent=fmtN(wg.tin+wg.tout); $("w-g-cand").textContent=wg.cand;
+    // quota auto-stop: the loop idles at 90% without writing a run row,
+    // so the pill must reflect it or it lies ("WORKING" while parked).
+    const quotaNote = {};
+    let quotaClaude = null, quotaGpt = null;
+    try {
+      quotaClaude = JSON.parse(await ghGet("usage/quota-claude.json"));
+      if ((quotaClaude.five_hour.used||0) >= 90)
+        quotaNote.claude = "QUOTA 90% · back ~"+resetHHMM(quotaClaude.five_hour.resets_at);
+    } catch(e) {}
+    try {
+      quotaGpt = JSON.parse(await ghGet("usage/quota-gpt.json"))[0];
+      if ((quotaGpt.windows.primary.percentUsed||0) >= 90)
+        quotaNote.gpt = "QUOTA 90% · back ~"+resetHHMM(quotaGpt.windows.primary.resetsAt);
+    } catch(e) {}
+
+    for (const [pfx, agent] of AGENTS) {
+      const s = dayStats(rows, agent, day);
+      renderAgent(pfx, s, paused[agent], PIPE_ON, quotaNote[agent]);
+      const w = dayStats(rows, agent, null);
+      $("w-"+pfx+"-runs").textContent = w.runs;
+      $("w-"+pfx+"-ofc").textContent = w.ok+"/"+w.fail+"/"+w.cap;
+      $("w-"+pfx+"-tok").textContent = fmtN(w.tin+w.tout);
+      $("w-"+pfx+"-cand").textContent = w.cand;
+    }
 
     const box = $("runs"); box.innerHTML = "";
     rows.slice(-12).reverse().forEach(r => {
@@ -317,19 +378,17 @@ async function refresh() {
       $("b-updated").textContent = "updated "+(bs.updated_utc||"—");
     } catch(e) { pill($("bot-pill"),"grey","no data yet"); }
 
-    // quota limits
+    // quota limits (data fetched above for the pill notes)
     try {
-      const qc = JSON.parse(await ghGet("usage/quota-claude.json"));
-      renderQuota("quota-c5h", "Claude · 5h window", {percentUsed: qc.five_hour.used, resetsAt: qc.five_hour.resets_at});
-      renderQuota("quota-cweek", "Claude · weekly", {percentUsed: qc.seven_day.used, resetsAt: qc.seven_day.resets_at});
+      renderQuota("quota-c5h", "Claude · 5h window", {percentUsed: quotaClaude.five_hour.used, resetsAt: quotaClaude.five_hour.resets_at});
+      renderQuota("quota-cweek", "Claude · weekly", {percentUsed: quotaClaude.seven_day.used, resetsAt: quotaClaude.seven_day.resets_at});
     } catch(e) {
       $("quota-c5h").innerHTML = '<span style="font-size:12px;color:var(--dim)">Claude quota unavailable</span>';
       $("quota-cweek").innerHTML = "";
     }
     try {
-      const q = JSON.parse(await ghGet("usage/quota-gpt.json"))[0];
-      renderQuota("quota-5h", "ChatGPT · 5h window", q.windows.primary);
-      renderQuota("quota-week", "ChatGPT · weekly", q.windows.secondary);
+      renderQuota("quota-5h", "ChatGPT · 5h window", quotaGpt.windows.primary);
+      renderQuota("quota-week", "ChatGPT · weekly", quotaGpt.windows.secondary);
     } catch(e) {
       $("quota-5h").innerHTML = '<span style="font-size:12px;color:var(--dim)">quota meter unavailable</span>';
       $("quota-week").innerHTML = "";
@@ -398,10 +457,10 @@ $("btn-forget").onclick = () => {
 $("btn-settings").onclick = showSetup;
 $("btn-refresh").onclick = refresh;
 $("btn-toggle").onclick = togglePipeline;
-$("btn-nap-claude").onclick = () => nap("claude");
-$("btn-wake-claude").onclick = () => wake("claude");
-$("btn-nap-gpt").onclick = () => nap("gpt");
-$("btn-wake-gpt").onclick = () => wake("gpt");
+for (const [, agent] of AGENTS) {
+  $("btn-nap-"+agent).onclick = () => nap(agent);
+  $("btn-wake-"+agent).onclick = () => wake(agent);
+}
 
 if (CFG.pat) showApp(); else showSetup();
 setInterval(() => { if (!$("app").hidden && !document.hidden) refresh(); }, 60000);
