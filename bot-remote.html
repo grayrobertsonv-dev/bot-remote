@@ -23,6 +23,11 @@
   .pill.amber { background:rgba(245,166,35,.15); color:var(--amber); border:1px solid var(--amber); }
   .pill.grey  { background:rgba(90,101,125,.15); color:var(--grey); border:1px solid var(--grey); }
   .pill.red   { background:rgba(224,82,82,.15); color:var(--red); border:1px solid var(--red); }
+  .bars { display:flex; align-items:flex-end; gap:4px; height:90px; margin-top:8px; }
+  .bar { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; min-width:0; }
+  .bar .col { width:100%; max-width:26px; border-radius:4px 4px 0 0; background:var(--accent,#4da3ff); }
+  .bar .d { font-size:9px; color:var(--dim); margin-top:4px; white-space:nowrap; }
+  .bar .n { font-size:10px; font-weight:700; margin-bottom:2px; }
   .bigbtn { display:block; width:100%; margin-top:12px; padding:16px; font-size:17px; font-weight:800;
             border-radius:14px; border:none; cursor:pointer; color:#0b0e14; }
   .bigbtn.off { background:var(--red); color:#fff; }
@@ -90,6 +95,11 @@
   </div>
 
   <div class="card">
+    <h2>Candidates per day</h2>
+    <div class="bars" id="cand-chart"><div style="color:var(--dim);font-size:12px;">loading…</div></div>
+  </div>
+
+  <div class="card">
     <h2>Trading bot · paper</h2>
     <span class="pill grey" id="bot-pill">…</span>
     <div class="statgrid">
@@ -115,6 +125,7 @@
     <div class="qrow" id="quota-kaggle"></div>
     <div class="qrow" id="quota-kaggle2"></div>
     <div class="qrow" id="quota-crosscheck"></div>
+    <div class="qrow" id="quota-aimodels"></div>
     <div class="qrow" id="quota-gemini"></div>
     <div class="qrow" id="quota-agy"></div>
     <div style="font-size:11px;color:var(--dim);margin-top:8px;">Claude &amp; ChatGPT auto-stop at 90% — the loop idles instead of burning the last 10%.</div>
@@ -272,8 +283,46 @@
     </div>
   </div>
 
+  <div class="card" id="card-kaggle3">
+    <h2>Kaggle 3 · GPU validator</h2>
+    <span class="pill grey" id="pill-kaggle3">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="3-runs">–</div><div class="k">runs · all time</div></div>
+      <div class="stat"><div class="v" id="3-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="3-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="3-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="3-verd">–</div><div class="k">verdicts</div></div>
+      <div class="stat"><div class="v" id="3-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="3-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-3">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-kaggle3">Nap 12h</button>
+      <button id="btn-wake-kaggle3">Wake</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-kaggle4">
+    <h2>Kaggle 4 · GPU validator</h2>
+    <span class="pill grey" id="pill-kaggle4">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="4-runs">–</div><div class="k">runs · all time</div></div>
+      <div class="stat"><div class="v" id="4-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="4-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="4-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="4-verd">–</div><div class="k">verdicts</div></div>
+      <div class="stat"><div class="v" id="4-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="4-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-4">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-kaggle4">Nap 12h</button>
+      <button id="btn-wake-kaggle4">Wake</button>
+    </div>
+  </div>
+
   <div class="card" id="card-crosscheck">
-    <h2>Oracle · CPU cross-checker</h2>
+    <h2>Kaggle · CPU cross-checker</h2>
     <span class="pill grey" id="pill-crosscheck">…</span>
     <div class="statgrid">
       <div class="stat"><div class="v" id="z-runs">–</div><div class="k">runs · all time</div></div>
@@ -309,6 +358,11 @@
     <div class="act" id="backlog-vsplit" style="opacity:.75">–</div>
   </div>
 
+  <div class="card" id="card-tasks">
+    <h2>Your tasks</h2>
+    <div class="act" id="tasks-list">loading…</div>
+  </div>
+
   <div class="card">
     <h2>Usage · today</h2>
     <table>
@@ -321,6 +375,8 @@
       <tr><td>orx</td><td id="w-w-runs">–</td><td id="w-w-ofc">–</td><td id="w-w-tok">–</td><td id="w-w-cand">–</td><td id="w-w-verd">–</td></tr>
       <tr><td>kaggle</td><td id="w-x-runs">–</td><td id="w-x-ofc">–</td><td id="w-x-tok">–</td><td id="w-x-cand">–</td><td id="w-x-verd">–</td></tr>
       <tr><td>kaggle2</td><td id="w-y-runs">–</td><td id="w-y-ofc">–</td><td id="w-y-tok">–</td><td id="w-y-cand">–</td><td id="w-y-verd">–</td></tr>
+      <tr><td>kaggle3</td><td id="w-3-runs">–</td><td id="w-3-ofc">–</td><td id="w-3-tok">–</td><td id="w-3-cand">–</td><td id="w-3-verd">–</td></tr>
+      <tr><td>kaggle4</td><td id="w-4-runs">–</td><td id="w-4-ofc">–</td><td id="w-4-tok">–</td><td id="w-4-cand">–</td><td id="w-4-verd">–</td></tr>
       <tr><td>crosscheck</td><td id="w-z-runs">–</td><td id="w-z-ofc">–</td><td id="w-z-tok">–</td><td id="w-z-cand">–</td><td id="w-z-verd">–</td></tr>
       <tr><td><b>total</b></td><td id="w-t-runs">–</td><td id="w-t-ofc">–</td><td id="w-t-tok">–</td><td id="w-t-cand">–</td><td id="w-t-verd">–</td></tr>
     </table>
@@ -404,7 +460,7 @@ function dayStats(rows, agent, day) {
   const f = rows.filter(r => r.agent===agent && (!day || (r.ts||"").slice(0,10)===day));
   const s = {runs:f.length, ok:0, fail:0, cap:0, tin:0, tout:0, cand:0, verd:0, chk:0, last:null};
   for (const r of f) {
-    if (r.status==="ok") s.ok++; else if (r.status==="cap") s.cap++; else s.fail++;
+    if (r.status==="ok") s.ok++; else if (r.status==="cap") s.cap++; else if (r.status==="idle") s.idle=(s.idle||0)+1; else s.fail++;
     s.tin += parseInt(r.in_tok||"0",10)||0;
     s.tout += parseInt(r.out_tok||"0",10)||0;
     s.cand += parseInt(r.new_candidates||"0",10)||0;
@@ -415,10 +471,10 @@ function dayStats(rows, agent, day) {
   return s;
 }
 
-const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["w","orx"],["x","kaggle"],["y","kaggle2"],["z","crosscheck"]];
+const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["w","orx"],["x","kaggle"],["y","kaggle2"],["3","kaggle3"],["4","kaggle4"],["z","crosscheck"]];
 // muse is ops-only (hourly health checks, no research stats) — it gets a
 // simple health card below instead of a stats row anywhere
-const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", w:"orx", x:"kaggle", y:"kaggle2", z:"crosscheck", u:"muse"};
+const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", w:"orx", x:"kaggle", y:"kaggle2", 3:"kaggle3", 4:"kaggle4", z:"crosscheck", u:"muse"};
 
 function resetHHMM(iso) {
   try { return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
@@ -478,7 +534,7 @@ async function refresh() {
     let rows = [];
     // The kaggle kernel appends to its own log (concurrent appends to the
     // shared log cause rebase conflicts). Merge it read-only.
-    for (const lp of ["usage/run-log.jsonl", "usage/run-log-kaggle.jsonl", "usage/run-log-kaggle2.jsonl", "usage/run-log-crosscheck.jsonl"]) {
+    for (const lp of ["usage/run-log.jsonl", "usage/run-log-kaggle.jsonl", "usage/run-log-kaggle2.jsonl", "usage/run-log-kaggle3.jsonl", "usage/run-log-kaggle4.jsonl", "usage/run-log-crosscheck.jsonl"]) {
       try {
         const txt = await ghGet(lp);
         for (const l of txt.trim().split("\n")) {
@@ -491,7 +547,11 @@ async function refresh() {
     // rows to viewer-local BEFORE sorting, so the merged list is chronological
     // (2026-09-30: sorting first left every kaggle row stamped 4h ahead).
     for (const r of rows) {
-      if (r.agent === "kaggle" || r.agent === "kaggle2" || r.agent === "crosscheck") {
+      // UTC-stamped agents: kaggle* (kernels), crosscheck (Oracle), muse (VM
+      // cron) and orx (GitHub Actions) all stamp UTC; the Mac agents stamp
+      // Detroit-local. (2026-09-30: muse/orx rows were missing from this list
+      // and displayed 4h in the future.)
+      if (["kaggle","kaggle2","kaggle3","kaggle4","crosscheck","muse","orx"].includes(r.agent)) {
         const m = /^(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})(\d{2})/.exec(r.ts||"");
         if (m) {
           const d = new Date(Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5], +m[6]));
@@ -599,7 +659,7 @@ async function refresh() {
       for (const r of rows) {
         if ((r.ts||"").slice(0,10) !== day) continue;
         nR++;
-        if (r.status==="ok") nOk++; else if (r.status==="cap") nCap++; else nFail++;
+        if (r.status==="ok") nOk++; else if (r.status==="cap") nCap++; else if (r.status!=="idle") nFail++;
         nTin += parseInt(r.in_tok||"0",10)||0;
         nTout += parseInt(r.out_tok||"0",10)||0;
         nCand += parseInt(r.new_candidates||"0",10)||0;
@@ -630,6 +690,38 @@ async function refresh() {
       $("muse-health").textContent = "no heartbeat yet";
     }
 
+    // your tasks: render USER-TODO.md (Gray's personal action list)
+    try {
+      const todo = await ghGet("USER-TODO.md");
+      const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+      // join wrapped continuation lines (indented, no new-block marker)
+      const lines = [];
+      for (const raw of todo.split("\n")) {
+        const l = raw.replace(/\s+$/,"");
+        const t = l.trim();
+        if (/^\s/.test(l) && lines.length && !/^\s*-\s+/.test(l)
+            && !/^\d+\./.test(t) && !/^#/.test(t)) {
+          lines[lines.length-1] += " " + t;
+        } else lines.push(l);
+      }
+      let html = "", n = 0;
+      for (const l of lines) {
+        const t = l.trim();
+        let m;
+        if ((m = /^## (.+)/.exec(t))) {
+          html += `<div style="margin:10px 0 4px;color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:1px">${esc(m[1])}</div>`;
+        } else if ((m = /^(\d+)\.\s+\*\*(.+?)\*\*\s*(.*)/.exec(t))) {
+          n++;
+          html += `<div style="margin:8px 0 2px"><span style="color:var(--dim)">${m[1]}.</span> <b>${esc(m[2])}</b>${m[3] ? " <span style='opacity:.8'>"+esc(m[3])+"</span>" : ""}</div>`;
+        } else if ((m = /^-\s+(.*)/.exec(t))) {
+          html += `<div style="opacity:.65;font-size:12px;margin:1px 0 1px 18px">· ${esc(m[1])}</div>`;
+        }
+      }
+      $("tasks-list").innerHTML = html || "no tasks";
+    } catch(e) {
+      $("tasks-list").textContent = "couldn't load USER-TODO.md";
+    }
+
     // backlog: candidates with no verdict yet (one recursive tree call,
     // cached 5min — see TREE_CACHE)
     try {
@@ -658,22 +750,46 @@ async function refresh() {
         ? "waiting: "+waiting.slice(0,5).join(", ")+(waiting.length>5 ? " +"+(waiting.length-5)+" more" : "")
         : "queue clear 🎉";
       // per-validator split of the verdict files — sums to backlog-verd by construction
-      const disp = {claude:"Claude", gpt:"GPT", gemini:"Gemini", agy:"Agy", or:"OpenRouter", kaggle:"Kaggle", kaggle2:"Kaggle 2", crosscheck:"Oracle", muse:"Muse"};
+      const disp = {claude:"Claude", gpt:"GPT", gemini:"Gemini", agy:"Agy", or:"OpenRouter", kaggle:"Kaggle", kaggle2:"Kaggle 2", kaggle3:"Kaggle 3", kaggle4:"Kaggle 4", crosscheck:"Kaggle CPU", muse:"Muse"};
       const parts = Object.keys(vByV.all||{}).sort((a,b)=>(vByV.all[b]||0)-(vByV.all[a]||0))
         .map(k => (disp[k]||k)+" "+(vByV.all[k]||0));
       $("backlog-vsplit").textContent = parts.length ? "by validator: "+parts.join(" · ") : "–";
+      // daily candidates bar chart (last 14 days, from filename dates)
+      try {
+        const perDay = {};
+        for (const c of cands) {
+          const m = c.match(/(\d{4}-\d{2}-\d{2})/);
+          if (m) perDay[m[1]] = (perDay[m[1]]||0) + 1;
+        }
+        const days = [];
+        const nowD = new Date();
+        for (let i = 13; i >= 0; i--) {
+          const d = new Date(nowD); d.setDate(d.getDate() - i);
+          const key = d.toISOString().slice(0,10);
+          days.push({key, label: (d.getMonth()+1)+"/"+d.getDate(), n: perDay[key]||0});
+        }
+        const maxN = Math.max(1, ...days.map(x => x.n));
+        const ch = $("cand-chart"); ch.innerHTML = "";
+        for (const x of days) {
+          const b = document.createElement("div"); b.className = "bar";
+          const h = Math.max(3, Math.round(x.n / maxN * 70));
+          b.innerHTML = '<div class="n">'+(x.n||"")+'</div><div class="col" style="height:'+h+'px;'+(x.n?"":"opacity:.25")+'"></div><div class="d">'+x.label+'</div>';
+          ch.appendChild(b);
+        }
+      } catch(e) { $("cand-chart").innerHTML = '<div style="color:var(--dim);font-size:12px;">chart unavailable</div>'; }
     } catch(e) { $("backlog-n").textContent = "?"; }
 
     const box = $("runs"); box.innerHTML = "";
     // muse rows are ops noise, not research — the health card covers it
     rows.filter(r => r.agent!=="muse").slice(-12).reverse().forEach(r => {
       const d = document.createElement("div"); d.className="run";
-      const cls = r.status==="ok" ? "green" : (r.status==="cap" ? "amber" : "red");
+      const cls = r.status==="ok" ? "green" : (r.status==="cap" ? "amber" : (r.status==="idle" ? "grey" : "red"));
       d.innerHTML = '<span class="t"></span><span class="a"></span><span class="pill '+cls+'"></span><span class="d"></span>';
       d.children[0].textContent = hhmm(r.ts);
       d.children[1].textContent = r.agent||"?";
       d.children[2].textContent = (r.status||"?").toUpperCase();
-      d.children[3].textContent = (r.dur_s||0)+"s · "+(r.new_candidates||0)+"c/"+(r.new_verdicts||0)+"v";
+      d.children[3].textContent = (r.dur_s||0)+"s · "+(r.new_candidates||0)+"c/"+(r.new_verdicts||0)+"v"
+        +(r.agent==="crosscheck" && r.new_crosschecks ? " · "+r.new_crosschecks+" checks" : "");
       box.appendChild(d);
     });
     if (!rows.length) box.innerHTML = '<div class="run"><span class="t">no runs logged yet</span></div>';
@@ -729,45 +845,76 @@ async function refresh() {
     } catch(e) {
       $("quota-muse").innerHTML = '<span style="font-size:12px;color:var(--dim)">Muse meter unavailable</span>';
     }
-    // Kaggle GPU quota: estimated from the kernel's own heartbeat accumulation
-    // (30 GPU-h/week free tier, resets Sunday 00:00 UTC). Appears once Gray
-    // switches to the notebook version that writes the gpu block.
+    // Kaggle accelerator quota: ONE shared account-level bucket (30 GPU-h /
+    // 20 TPU-h) across all kernels — rendered once here, never per-kernel.
+    // Real numbers scraped from the signed-in account page by the
+    // kaggle-quota cron (every 6h) -> usage/quota-kaggle.json. Falls back
+    // to the summed kernel heartbeat GPU estimates when the scrape is stale.
     // NOTE: uses the same markup as renderQuota — the stylesheet only defines
     // .qbar/.qbar>div, so custom classes (qname/qfill/qpct/qreset) render broken.
     try {
-      const kact = JSON.parse(await ghGet("usage/activity-kaggle.json"));
-      const gpu = kact.gpu;
-      if (gpu && isFinite(gpu.seconds)) {
-        const usedH = gpu.seconds/3600, QUOTA_H = 30;
+      const qk = JSON.parse(await ghGet("usage/quota-kaggle.json"));
+      const ageH = (Date.now()/1000 - (qk.ts||0))/3600;
+      if (!(isFinite(qk.gpu_used_h) && qk.gpu_limit_h && ageH < 12)) throw 0;
+      const usedH = qk.gpu_used_h, QUOTA_H = qk.gpu_limit_h;
+      const pct = Math.max(0, Math.min(100, Math.round(usedH/QUOTA_H*100)));
+      const kcls = pct >= 90 ? "red" : (pct >= 75 ? "amber" : "green");
+      const kcolor = kcls==="red" ? "var(--red)" : (kcls==="amber" ? "var(--amber)" : "var(--green)");
+      const ago = ageH < 1 ? Math.round(ageH*60)+"m ago" : ageH.toFixed(1)+"h ago";
+      $("quota-kaggle").innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
+        '<span>Kaggle account · GPU (shared)</span><span class="pill '+kcls+'">'+usedH.toFixed(1)+' / '+QUOTA_H+'h</span></div>' +
+        '<div class="qbar"><div style="width:'+pct+'%;background:'+kcolor+'"></div></div>' +
+        '<div style="font-size:11px;color:var(--dim);margin-top:4px;">scraped '+ago+' · account page · all kernels draw from this one bucket</div>';
+    } catch(e0) {
+    try {
+      // Fallback: sum every kernel's heartbeat GPU seconds — a combined
+      // estimate of the same shared bucket.
+      let totS = 0, nHB = 0, wk = 0;
+      for (const kf of ["usage/activity-kaggle.json","usage/activity-kaggle2.json","usage/activity-kaggle3.json","usage/activity-kaggle4.json"]) {
+        try {
+          const ka = JSON.parse(await ghGet(kf));
+          const g = ka.gpu;
+          if (g && isFinite(g.seconds)) { totS += g.seconds; nHB++; if (g.week) wk = g.week; }
+        } catch(e2) {}
+      }
+      if (nHB > 0 && totS > 0) {
+        const usedH = totS/3600, QUOTA_H = 30;
         const pct = Math.max(0, Math.min(100, Math.round(usedH/QUOTA_H*100)));
         const kcls = pct >= 90 ? "red" : (pct >= 75 ? "amber" : "green");
         const kcolor = kcls==="red" ? "var(--red)" : (kcls==="amber" ? "var(--amber)" : "var(--green)");
-        const wk = new Date((gpu.week||0)*1000).toLocaleDateString("en-US",{month:"short",day:"numeric"});
+        const wks = wk ? new Date(wk*1000).toLocaleDateString("en-US",{month:"short",day:"numeric"}) : "this week";
         $("quota-kaggle").innerHTML =
           '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
-          '<span>Kaggle · GPU (est.)</span><span class="pill '+kcls+'">'+usedH.toFixed(1)+' / '+QUOTA_H+'h</span></div>' +
+          '<span>Kaggle account · GPU (shared, est.)</span><span class="pill '+kcls+'">'+usedH.toFixed(1)+' / '+QUOTA_H+'h</span></div>' +
           '<div class="qbar"><div style="width:'+pct+'%;background:'+kcolor+'"></div></div>' +
-          '<div style="font-size:11px;color:var(--dim);margin-top:4px;">week of '+wk+' · free tier · resets Sun 00:00 UTC</div>';
-      } else $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle · GPU — waiting for notebook switch</span>';
+          '<div style="font-size:11px;color:var(--dim);margin-top:4px;">'+nHB+' kernel heartbeat(s) summed · week of '+wks+' · free tier</div>';
+      } else $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle account · GPU — waiting for quota scrape</span>';
     } catch(e) { $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle GPU meter unavailable</span>'; }
-    // Second kernel: same estimate from its own heartbeat. Hidden until deployed.
+    }
+    // Kaggle TPU: real scraped number from the same shared account bucket.
+    // Access is locked behind Persona ID verification (checked 2026-09-30) —
+    // quota exists but can't be spent yet.
     try {
-      const k2act = JSON.parse(await ghGet("usage/activity-kaggle2.json"));
-      const gpu2 = k2act.gpu;
-      if (gpu2 && isFinite(gpu2.seconds)) {
-        const usedH2 = gpu2.seconds/3600, QUOTA_H = 30;
-        const pct2 = Math.max(0, Math.min(100, Math.round(usedH2/QUOTA_H*100)));
-        const kc2 = pct2 >= 90 ? "red" : (pct2 >= 75 ? "amber" : "green");
-        const kcol2 = kc2==="red" ? "var(--red)" : (kc2==="amber" ? "var(--amber)" : "var(--green)");
-        const wk2 = new Date((gpu2.week||0)*1000).toLocaleDateString("en-US",{month:"short",day:"numeric"});
-        $("quota-kaggle2").innerHTML =
-          '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
-          '<span>Kaggle 2 · GPU (est.)</span><span class="pill '+kc2+'">'+usedH2.toFixed(1)+' / '+QUOTA_H+'h</span></div>' +
-          '<div class="qbar"><div style="width:'+pct2+'%;background:'+kcol2+'"></div></div>' +
-          '<div style="font-size:11px;color:var(--dim);margin-top:4px;">week of '+wk2+' · free tier · resets Sun 00:00 UTC</div>';
-      } else $("quota-kaggle2").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle 2 · GPU — waiting for first heartbeat</span>';
-    } catch(e) { $("quota-kaggle2").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle 2 · not deployed yet</span>'; }
-    quotaStatic("quota-crosscheck", "Oracle · always-free CPU (no meter)", paused.crosscheck);
+      const qk2 = JSON.parse(await ghGet("usage/quota-kaggle.json"));
+      const ageH2 = (Date.now()/1000 - (qk2.ts||0))/3600;
+      if (!(isFinite(qk2.tpu_used_h) && qk2.tpu_limit_h && ageH2 < 12)) throw 0;
+      const usedT = qk2.tpu_used_h, QUOTA_T = qk2.tpu_limit_h;
+      const pctT = Math.max(0, Math.min(100, Math.round(usedT/QUOTA_T*100)));
+      $("quota-kaggle2").innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
+        '<span>Kaggle account · TPU (shared)</span><span class="pill green">'+usedT.toFixed(1)+' / '+QUOTA_T+'h</span></div>' +
+        '<div class="qbar"><div style="width:'+pctT+'%;background:var(--green)"></div></div>' +
+        '<div style="font-size:11px;color:var(--dim);margin-top:4px;">locked · needs ID verification · free tier</div>';
+    } catch(e) { $("quota-kaggle2").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle account · TPU — no quota scrape yet</span>'; }
+    quotaStatic("quota-crosscheck", "Kaggle · CPU (no meter)", paused.crosscheck);
+    // Kaggle AI Models allowance: hosted LLM inference credit (Community
+    // Benchmarks), $10/day + $100/month — separate from notebook GPU hours.
+    // No scraper yet; keep it visible so the allowance doesn't get forgotten.
+    $("quota-aimodels").innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
+      '<span>Kaggle · AI Models (LLM credit)</span><span class="pill grey">not tracked</span></div>' +
+      '<div style="font-size:11px;color:var(--dim);margin-top:4px;">$10/day + $100/month · first test call pending</div>';
     quotaStatic("quota-orx", "orx · GitHub Actions free tier (no meter)", paused.orx);
     quotaStatic("quota-gemini", "Gemini · free tier", paused.gemini);
     quotaStatic("quota-agy", "Agy · free tier", paused.agy);
