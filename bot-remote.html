@@ -398,6 +398,7 @@
       <tr><td>kaggle3</td><td id="w-3-runs">–</td><td id="w-3-ofc">–</td><td id="w-3-tok">–</td><td id="w-3-cand">–</td><td id="w-3-verd">–</td></tr>
       <tr><td>kaggle4</td><td id="w-4-runs">–</td><td id="w-4-ofc">–</td><td id="w-4-tok">–</td><td id="w-4-cand">–</td><td id="w-4-verd">–</td></tr>
       <tr><td>crosscheck</td><td id="w-z-runs">–</td><td id="w-z-ofc">–</td><td id="w-z-tok">–</td><td id="w-z-cand">–</td><td id="w-z-verd">–</td></tr>
+      <tr><td>qa</td><td id="w-q-runs">–</td><td id="w-q-ofc">–</td><td id="w-q-tok">–</td><td id="w-q-cand">–</td><td id="w-q-verd">–</td></tr>
       <tr><td><b>total</b></td><td id="w-t-runs">–</td><td id="w-t-ofc">–</td><td id="w-t-tok">–</td><td id="w-t-cand">–</td><td id="w-t-verd">–</td></tr>
     </table>
   </div>
@@ -717,6 +718,8 @@ async function refresh() {
       $(pfx+"-verd").textContent = agent==="crosscheck" ? allS.chk : (vByV.all[agent]||0);
       // Usage table shows TODAY's stats; verdicts from vByV.d1 ("–" until
       // the first report run that includes the d1 key).
+      // Guard: a missing usage-table row must never abort the whole refresh.
+      if (!$("w-"+pfx+"-runs")) continue;
       $("w-"+pfx+"-runs").textContent = todayS.runs;
       $("w-"+pfx+"-ofc").textContent = todayS.ok+"/"+todayS.fail+"/"+todayS.cap;
       $("w-"+pfx+"-tok").textContent = fmtN(todayS.tin+todayS.tout);
