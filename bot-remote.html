@@ -123,13 +123,25 @@
     <div class="qrow" id="quota-orx"></div>
     <div class="qrow" id="quota-muse"></div>
     <div class="qrow" id="quota-kaggle"></div>
-    <div class="qrow" id="quota-kaggle2"></div>
     <div class="qrow" id="quota-crosscheck"></div>
     <div class="qrow" id="quota-aimodels"></div>
     <div class="qrow" id="quota-gemini"></div>
     <div class="qrow" id="quota-agy"></div>
     <div class="qrow" id="quota-qa"></div>
     <div style="font-size:11px;color:var(--dim);margin-top:8px;">Claude &amp; ChatGPT auto-stop at 90% — the loop idles instead of burning the last 10%.</div>
+  </div>
+
+  <div class="card" id="card-modal">
+    <h2>Modal · free compute</h2>
+    <span class="pill grey" id="modal-pill">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="m-plan">–</div><div class="k">plan</div></div>
+      <div class="stat"><div class="v" id="m-credits">–</div><div class="k">included / mo</div></div>
+      <div class="stat"><div class="v" id="m-cap">–</div><div class="k">spend cap</div></div>
+      <div class="stat"><div class="v" id="m-apps">–</div><div class="k">apps live</div></div>
+    </div>
+    <div style="font-size:11px;color:var(--dim);margin-top:8px;" id="m-proof">—</div>
+    <div style="font-size:11px;color:var(--dim);margin-top:4px;" id="m-checked">—</div>
   </div>
 
   <div class="card" id="card-claude">
@@ -960,6 +972,21 @@ async function refresh() {
     } catch(e) {
       $("quota-muse").innerHTML = '<span style="font-size:12px;color:var(--dim)">Muse meter unavailable</span>';
     }
+    // Modal free compute — usage/modal.json refreshed by modal-status.py
+    try {
+      const mm = JSON.parse(await ghGet("usage/modal.json"));
+      $("m-plan").textContent = mm.plan || "–";
+      $("m-credits").textContent = mm.included_credits || "–";
+      $("m-cap").textContent = mm.spend_cap || "–";
+      const mApps = mm.apps || [];
+      $("m-apps").textContent = mApps.length ? mApps.join(", ") : "none";
+      pill($("modal-pill"), mApps.length ? "green" : "amber", mApps.length ? "LIVE · $0 cap" : "no apps");
+      const lp = mm.last_proof || {};
+      $("m-proof").textContent = "last proof " + (lp.when || "—") + ": " + (lp.summary || "—");
+      $("m-checked").textContent = "checked " + (mm.checked_utc || "—") + " · workspace " + (mm.workspace || "—");
+    } catch(e) {
+      pill($("modal-pill"), "grey", "no data yet");
+    }
     // Kaggle accelerator quota: ONE shared account-level bucket (30 GPU-h /
     // 20 TPU-h) across all kernels — rendered once here, never per-kernel.
     // Real numbers scraped from the signed-in account page by the
@@ -1007,21 +1034,6 @@ async function refresh() {
       } else $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle account · GPU — waiting for quota scrape</span>';
     } catch(e) { $("quota-kaggle").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle GPU meter unavailable</span>'; }
     }
-    // Kaggle TPU: real scraped number from the same shared account bucket.
-    // Access is locked behind Persona ID verification (checked 2026-09-30) —
-    // quota exists but can't be spent yet.
-    try {
-      const qk2 = JSON.parse(await ghGet("usage/quota-kaggle.json"));
-      const ageH2 = (Date.now()/1000 - (qk2.ts||0))/3600;
-      if (!(isFinite(qk2.tpu_used_h) && qk2.tpu_limit_h && ageH2 < 12)) throw 0;
-      const usedT = qk2.tpu_used_h, QUOTA_T = qk2.tpu_limit_h;
-      const pctT = Math.max(0, Math.min(100, Math.round(usedT/QUOTA_T*100)));
-      $("quota-kaggle2").innerHTML =
-        '<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;">' +
-        '<span>Kaggle account · TPU (shared)</span><span class="pill green">'+usedT.toFixed(1)+' / '+QUOTA_T+'h</span></div>' +
-        '<div class="qbar"><div style="width:'+pctT+'%;background:var(--green)"></div></div>' +
-        '<div style="font-size:11px;color:var(--dim);margin-top:4px;">locked · needs ID verification · free tier</div>';
-    } catch(e) { $("quota-kaggle2").innerHTML = '<span style="font-size:12px;color:var(--dim)">Kaggle account · TPU — no quota scrape yet</span>'; }
     quotaStatic("quota-crosscheck", "Kaggle · CPU (no meter)", paused.crosscheck);
     // Kaggle AI Models allowance: hosted LLM inference credit (Community
     // Benchmarks), $10/day + $100/month — separate from notebook GPU hours.
