@@ -884,13 +884,17 @@ async function refresh() {
         }
         const maxN = Math.max(1, ...days.map(x => x.n));
         const maxF = Math.max(1, ...days.map(x => x.f));
-        const W = 560, H = 120, PADL = 4, PADB = 18, PADT = 16;
+        // 2026-10-01: phone legibility — the chart scrolls horizontally at a
+        // fixed minimum width instead of shrinking to fit, so bars and
+        // labels stay readable on a ~380px phone screen.
+        const W = 700, H = 150, PADL = 6, PADB = 24, PADT = 20;
         const plotH = H - PADT - PADB;
         const slotW = (W - PADL*2) / days.length;
-        const barW = Math.min(14, slotW/2 - 3);
+        const barW = Math.min(16, slotW/2 - 3);
         const baseY = PADT + plotH;
         const f1 = x => (Math.round(x*10)/10);
-        let s = '<svg viewBox="0 0 '+W+' '+H+'" style="width:100%;height:auto;display:block" role="img" aria-label="candidates and failed runs per day">';
+        let s = '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'
+          + '<svg viewBox="0 0 '+W+' '+H+'" style="min-width:620px;width:100%;height:auto;display:block" role="img" aria-label="candidates and failed runs per day">';
         s += '<line x1="'+PADL+'" y1="'+baseY+'" x2="'+(W-PADL)+'" y2="'+baseY+'" stroke-width="1" opacity="0.4" style="stroke:var(--dim)"/>';
         days.forEach((x, i) => {
           const cx = PADL + slotW*i + slotW/2;
@@ -899,11 +903,11 @@ async function refresh() {
           const yN = baseY - hn, yF = baseY - hf;
           s += '<rect x="'+f1(cx-barW-1)+'" y="'+yN+'" width="'+f1(barW)+'" height="'+Math.max(hn, x.n?2:0)+'" rx="2" style="fill:var(--blue)"'+(x.n?'':' opacity="0.18"')+'><title>'+x.key+': '+x.n+' candidates</title></rect>';
           s += '<rect x="'+f1(cx+1)+'" y="'+yF+'" width="'+f1(barW)+'" height="'+Math.max(hf, x.f?2:0)+'" rx="2" style="fill:var(--red)"'+(x.f?'':' opacity="0.18"')+'><title>'+x.key+': '+x.f+' failed runs</title></rect>';
-          if (x.n) s += '<text x="'+f1(cx-barW/2-1)+'" y="'+(yN-4)+'" font-size="10" font-weight="700" text-anchor="middle" style="fill:var(--txt)">'+x.n+'</text>';
-          if (x.f) s += '<text x="'+f1(cx+barW/2+1)+'" y="'+(yF-4)+'" font-size="10" font-weight="700" text-anchor="middle" style="fill:var(--red)">✕'+x.f+'</text>';
-          if (i % 2 === 1) s += '<text x="'+f1(cx)+'" y="'+(H-4)+'" font-size="9" text-anchor="middle" style="fill:var(--dim)">'+x.label+'</text>';
+          if (x.n) s += '<text x="'+f1(cx-barW/2-1)+'" y="'+(yN-6)+'" font-size="12" font-weight="700" text-anchor="middle" style="fill:var(--txt)">'+x.n+'</text>';
+          if (x.f) s += '<text x="'+f1(cx+barW/2+1)+'" y="'+(yF-6)+'" font-size="12" font-weight="700" text-anchor="middle" style="fill:var(--red)">✕'+x.f+'</text>';
+          if (i % 2 === 1) s += '<text x="'+f1(cx)+'" y="'+(H-5)+'" font-size="11" text-anchor="middle" style="fill:var(--dim)">'+x.label+'</text>';
         });
-        s += '</svg>';
+        s += '</svg></div>';
         // diagnostic line — the chart must never silently show nothing
         const totN = days.reduce((a,x)=>a+x.n,0), totF = days.reduce((a,x)=>a+x.f,0);
         s += '<div style="font-size:11px;color:var(--dim);margin-top:4px;">14d totals: <b style="color:var(--txt)">'+totN+'</b> candidates · <b style="color:var(--txt)">'+totF+'</b> fails'
