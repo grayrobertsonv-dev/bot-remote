@@ -798,11 +798,18 @@ async function refresh() {
         .map(k => (disp[k]||k)+" "+(vByV.all[k]||0));
       $("backlog-vsplit").textContent = parts.length ? "by validator: "+parts.join(" · ") : "–";
       // daily candidates + fails bar chart (last 14 days)
+      // NOTE: candidate filenames stamp UTC (2026-09-30-0000 = Sep 29 8pm EDT).
+      // Convert to viewer-local date so the chart matches the run-log tally.
       try {
         const perDay = {};
         for (const c of cands) {
-          const m = c.match(/(\d{4}-\d{2}-\d{2})/);
-          if (m) perDay[m[1]] = (perDay[m[1]]||0) + 1;
+          const m = c.match(/(\d{4})-(\d{2})-(\d{2})-(\d{2})(\d{2})/);
+          if (m) {
+            const utc = new Date(Date.UTC(+m[1], +m[2]-1, +m[3], +m[4], +m[5]));
+            const p = n => String(n).padStart(2,"0");
+            const key = utc.getFullYear()+"-"+p(utc.getMonth()+1)+"-"+p(utc.getDate());
+            perDay[key] = (perDay[key]||0) + 1;
+          }
         }
         const days = [];
         const nowD = new Date();
