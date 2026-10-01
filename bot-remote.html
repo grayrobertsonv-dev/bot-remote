@@ -224,13 +224,9 @@
     <h2>QA · bug-hunter</h2>
     <span class="pill grey" id="pill-qa">…</span>
     <div class="statgrid">
-      <div class="stat"><div class="v" id="q-runs">–</div><div class="k">runs · all time</div></div>
-      <div class="stat"><div class="v" id="q-tok">–</div><div class="k">tokens in/out</div></div>
-      <div class="stat"><div class="v" id="q-cap">–</div><div class="k">cap hits</div></div>
-      <div class="stat"><div class="v" id="q-cand">–</div><div class="k">candidates</div></div>
-      <div class="stat"><div class="v" id="q-verd">–</div><div class="k">verdicts</div></div>
       <div class="stat"><div class="v" id="q-last">–</div><div class="k">last run</div></div>
-      <div class="stat"><div class="v" id="q-ok">–</div><div class="k">ok / fail</div></div>
+      <div class="stat"><div class="v" id="q-bugs-today">–</div><div class="k">bugs found today</div></div>
+      <div class="stat"><div class="v" id="q-bugs-total">–</div><div class="k">bugs found total</div></div>
     </div>
     <div class="act" id="act-q">💤 idle</div>
     <div class="rowbtn">
@@ -549,6 +545,51 @@ function renderAgent(pfx, st, pausedUntil, pipeOn, note, working) {
   else pill(p,"green","WORKING");
 }
 
+// QA is a bug-hunter, not a researcher — its card shows bug counts from
+// usage/qa-bugs.jsonl (one JSON line per newly discovered bug) instead of
+// the trading stats every other agent gets.
+async function renderQA(pausedUntil, pipeOn, actMode, actAgeMin, actDetail) {
+  const p = $("pill-qa");
+  const working = actMode === "qa-review" || actAgeMin <= 10;
+  if (!pipeOn) pill(p,"grey","OFF · pipeline off");
+  else if (pausedUntil) {
+    const d = new Date(pausedUntil*1000);
+    const md = d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    const hm = String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+    pill(p,"amber","NAPPING until "+md+" "+hm);
+  }
+  else if (working) pill(p,"green","WORKING");
+  else pill(p,"grey","IDLE");
+  const actEl = $("act-q");
+  if (actMode === "qa-review") actEl.textContent = "🔍 deep review running · "+String(actDetail).slice(0,60);
+  else if (actDetail) actEl.textContent = "💤 "+String(actDetail).slice(0,80);
+  else actEl.textContent = "💤 idle";
+  // last run: usage/last-run-qa holds epoch seconds (written by qa-run.sh)
+  try {
+    const lr = parseInt((await ghGet("usage/last-run-qa")).trim(), 10);
+    if (isNaN(lr)) { $("q-last").textContent = "—"; }
+    else {
+      const d = new Date(lr*1000);
+      $("q-last").textContent = String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");
+    }
+  } catch(e) { $("q-last").textContent = "—"; }
+  // bugs: usage/qa-bugs.jsonl, one {"ts": epoch, "summary": "..."} per line
+  try {
+    const txt = await ghGet("usage/qa-bugs.jsonl");
+    const now = new Date();
+    let total = 0, today = 0;
+    for (const l of txt.trim().split("\n")) {
+      if (!l.trim()) continue;
+      let b; try { b = JSON.parse(l); } catch(e) { continue; }
+      total++;
+      const d = new Date((b.ts||0)*1000);
+      if (d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate()) today++;
+    }
+    $("q-bugs-today").textContent = today;
+    $("q-bugs-total").textContent = total;
+  } catch(e) { $("q-bugs-today").textContent = "0"; $("q-bugs-total").textContent = "0"; }
+}
+
 // run-log timestamps are viewer-local "YYYY-MM-DD-HHMMSS" (kaggle rows are
 // converted from UTC at load) — parse to ms
 function tsMs(ts) {
@@ -727,9 +768,16 @@ async function refresh() {
       // Agent cards show ALL-TIME run stats; verdicts come from stamped
       // files (vByV.all), not the run-log sum — the run-log double-counts
       // under concurrent supervisors.
-      renderAgent(pfx, allS, paused[agent], PIPE_ON, quotaNote[agent], working);
-      // crosscheck writes crosscheck-*.md, not verdicts — show its check count
-      $(pfx+"-verd").textContent = agent==="crosscheck" ? allS.chk : (vByV.all[agent]||0);
+      // QA is a bug-hunter: it gets its own card (bug counts), not the
+      // trading stats. renderAgent would touch elements that don't exist
+      // on the QA card, so branch before it.
+      if (agent === "qa") {
+        await renderQA(paused[agent], PIPE_ON, actMode, actAgeMin, actDetail);
+      } else {
+        renderAgent(pfx, allS, paused[agent], PIPE_ON, quotaNote[agent], working);
+        // crosscheck writes crosscheck-*.md, not verdicts — show its check count
+        $(pfx+"-verd").textContent = agent==="crosscheck" ? allS.chk : (vByV.all[agent]||0);
+      }
       // Usage table shows TODAY's stats; verdicts from vByV.d1 ("–" until
       // the first report run that includes the d1 key).
       // Guard: a missing usage-table row must never abort the whole refresh.
@@ -742,6 +790,9 @@ async function refresh() {
       // concurrent supervisors, so it is no longer used here.
       $("w-"+pfx+"-cand").textContent = candDayAgents(day)[agent]||0;
       $("w-"+pfx+"-verd").textContent = agent==="crosscheck" ? todayS.chk : (vByV.d1 ? (vByV.d1[agent]||0) : "–");
+      // QA's activity line is set by renderQA above — the generic block
+      // below would overwrite it with researcher wording.
+      if (agent !== "qa") {
       const actEl = $("act-"+pfx);
       if (paused[agent]) {
         const d = new Date(paused[agent]*1000);
@@ -758,6 +809,7 @@ async function refresh() {
       else if (runFresh) actEl.textContent = "✓ run done "+Math.max(1,Math.round(runAgeMin))+"m ago";
       else if (!actSeen && !allS.last) actEl.textContent = "🕐 waiting for first signal";
       else actEl.textContent = "💤 idle";
+      } // end non-qa activity line
     }
 
     // usage totals: every agent still counts here, including muse
