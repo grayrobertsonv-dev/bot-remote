@@ -128,6 +128,7 @@
     <div class="qrow" id="quota-aimodels"></div>
     <div class="qrow" id="quota-gemini"></div>
     <div class="qrow" id="quota-agy"></div>
+    <div class="qrow" id="quota-qa"></div>
     <div style="font-size:11px;color:var(--dim);margin-top:8px;">Claude &amp; ChatGPT auto-stop at 90% — the loop idles instead of burning the last 10%.</div>
   </div>
 
@@ -204,6 +205,25 @@
     <div class="rowbtn">
       <button id="btn-nap-agy">Nap 12h</button>
       <button id="btn-wake-agy">Wake</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-qa">
+    <h2>QA · bug-hunter</h2>
+    <span class="pill grey" id="pill-qa">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="q-runs">–</div><div class="k">runs · all time</div></div>
+      <div class="stat"><div class="v" id="q-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="q-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="q-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="q-verd">–</div><div class="k">verdicts</div></div>
+      <div class="stat"><div class="v" id="q-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="q-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-q">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-qa">Nap 12h</button>
+      <button id="btn-wake-qa">Wake</button>
     </div>
   </div>
 
@@ -460,7 +480,11 @@ function dayStats(rows, agent, day) {
   const f = rows.filter(r => r.agent===agent && (!day || (r.ts||"").slice(0,10)===day));
   const s = {runs:f.length, ok:0, fail:0, cap:0, tin:0, tout:0, cand:0, verd:0, chk:0, last:null};
   for (const r of f) {
-    if (r.status==="ok") s.ok++; else if (r.status==="cap") s.cap++; else if (r.status==="idle") s.idle=(s.idle||0)+1; else s.fail++;
+    // 2026-09-30: crosscheck's no_code ("no saved code to verify") and
+    // not_run ("verdict itself says untestable") are "nothing to check",
+    // NOT failures — counting them as fails put 52 phantom fails into the
+    // Usage table while the chart (strict status==="fail") showed 67.
+    if (r.status==="ok") s.ok++; else if (r.status==="cap") s.cap++; else if (isIdleish(r.status)) s.idle=(s.idle||0)+1; else s.fail++;
     s.tin += parseInt(r.in_tok||"0",10)||0;
     s.tout += parseInt(r.out_tok||"0",10)||0;
     s.cand += parseInt(r.new_candidates||"0",10)||0;
@@ -470,11 +494,13 @@ function dayStats(rows, agent, day) {
   }
   return s;
 }
+// statuses that mean "ran, nothing to do" rather than a failure
+function isIdleish(st) { return st==="idle"||st==="no_code"||st==="not_run"; }
 
-const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["w","orx"],["x","kaggle"],["y","kaggle2"],["3","kaggle3"],["4","kaggle4"],["z","crosscheck"]];
+const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["w","orx"],["x","kaggle"],["y","kaggle2"],["3","kaggle3"],["4","kaggle4"],["z","crosscheck"],["q","qa"]];
 // muse is ops-only (hourly health checks, no research stats) — it gets a
 // simple health card below instead of a stats row anywhere
-const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", w:"orx", x:"kaggle", y:"kaggle2", 3:"kaggle3", 4:"kaggle4", z:"crosscheck", u:"muse"};
+const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", w:"orx", x:"kaggle", y:"kaggle2", 3:"kaggle3", 4:"kaggle4", z:"crosscheck", u:"muse", q:"qa"};
 
 function resetHHMM(iso) {
   try { return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
@@ -606,6 +632,25 @@ async function refresh() {
       } else ab.hidden = true;
     } catch(e) {}
 
+    // Candidate ground truth (git-based, from candidate-daily.py). Fetched
+    // ONCE here and shared by the Usage table and the chart below, so the
+    // two can never disagree. 2026-09-30: the table summed run-log
+    // new_candidates (13) while the chart showed git truth (10) — the
+    // run-log double-counts under concurrent supervisors.
+    // Format: {"2026-09-30": {"total": 10, "by_agent": {"or": 8, ...}}}.
+    // Tolerate the old flat {"2026-09-30": 10} format during deploy rollout.
+    let candDaily = {};
+    try { candDaily = JSON.parse(await ghGet("usage/candidate-daily.json")); } catch(e) {}
+    const candDayTotal = d => {
+      const v = candDaily[d];
+      if (v === undefined || v === null) return 0;
+      return (typeof v === "object") ? (v.total||0) : v;
+    };
+    const candDayAgents = d => {
+      const v = candDaily[d];
+      return (v && typeof v === "object" && v.by_agent) ? v.by_agent : {};
+    };
+
     // Verdict attribution: per-agent "verdicts" used to sum run-log
     // new_verdicts, which double-counts — 4 supervisors share one working
     // tree and each run counts `ls results/` before/after as its own work
@@ -675,7 +720,10 @@ async function refresh() {
       $("w-"+pfx+"-runs").textContent = todayS.runs;
       $("w-"+pfx+"-ofc").textContent = todayS.ok+"/"+todayS.fail+"/"+todayS.cap;
       $("w-"+pfx+"-tok").textContent = fmtN(todayS.tin+todayS.tout);
-      $("w-"+pfx+"-cand").textContent = todayS.cand;
+      // cand: git ground truth for today (by_agent split) — matches the
+      // chart exactly. Run-log new_candidates double-counts under
+      // concurrent supervisors, so it is no longer used here.
+      $("w-"+pfx+"-cand").textContent = candDayAgents(day)[agent]||0;
       $("w-"+pfx+"-verd").textContent = agent==="crosscheck" ? todayS.chk : (vByV.d1 ? (vByV.d1[agent]||0) : "–");
       const actEl = $("act-"+pfx);
       if (paused[agent]) {
@@ -698,19 +746,20 @@ async function refresh() {
     // usage totals: every agent still counts here, including muse
     // (its own row is gone — the numbers live on in this row)
     {
-      let nR=0, nOk=0, nFail=0, nCap=0, nTin=0, nTout=0, nCand=0;
+      let nR=0, nOk=0, nFail=0, nCap=0, nTin=0, nTout=0;
       for (const r of rows) {
         if ((r.ts||"").slice(0,10) !== day) continue;
         nR++;
-        if (r.status==="ok") nOk++; else if (r.status==="cap") nCap++; else if (r.status!=="idle") nFail++;
+        if (r.status==="ok") nOk++; else if (r.status==="cap") nCap++; else if (!isIdleish(r.status)) nFail++;
         nTin += parseInt(r.in_tok||"0",10)||0;
         nTout += parseInt(r.out_tok||"0",10)||0;
-        nCand += parseInt(r.new_candidates||"0",10)||0;
       }
       $("w-t-runs").textContent = nR;
       $("w-t-ofc").textContent = nOk+"/"+nFail+"/"+nCap;
       $("w-t-tok").textContent = fmtN(nTin+nTout);
-      $("w-t-cand").textContent = nCand;
+      // total candidates = git ground truth for today — identical to the
+      // chart's today bar by construction (not the run-log sum).
+      $("w-t-cand").textContent = candDayTotal(day);
       $("w-t-verd").textContent = vByV.d1 ? Object.values(vByV.d1).reduce((a,b)=>a+(b||0),0) : "–";
     }
 
@@ -798,25 +847,30 @@ async function refresh() {
         .map(k => (disp[k]||k)+" "+(vByV.all[k]||0));
       $("backlog-vsplit").textContent = parts.length ? "by validator: "+parts.join(" · ") : "–";
       // daily candidates + fails bar chart (last 14 days)
-      // SOURCE OF TRUTH: usage/candidate-daily.json — generated by
-      // candidate-daily.py from git commit timestamps (America/Detroit dates).
-      // Filename dates are UTC stamps, not creation dates.
+      // SOURCE OF TRUTH: candDaily (usage/candidate-daily.json, fetched once
+      // above and shared with the Usage table so the two views match) —
+      // generated by candidate-daily.py from git commit timestamps
+      // (America/Detroit dates). Filename dates are UTC stamps, not dates.
       try {
-        const perDay = JSON.parse(await ghGet("usage/candidate-daily.json"));
         const days = [];
         const nowD = new Date();
         const p2 = n => String(n).padStart(2,"0");
         for (let i = 13; i >= 0; i--) {
           const d = new Date(nowD); d.setDate(d.getDate() - i);
           const key = d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate());
-          days.push({key, label: (d.getMonth()+1)+"/"+d.getDate(), n: perDay[key]||0, f: failsPerDay[key]||0});
+          days.push({key, label: (d.getMonth()+1)+"/"+d.getDate(), n: candDayTotal(key), f: failsPerDay[key]||0});
         }
-        const maxN = Math.max(1, ...days.map(x => Math.max(x.n, x.f)));
+        // 2026-09-30: candidates and fails scale INDEPENDENTLY. A fail
+        // storm (149 fast-fails on 9/29) shared one scale with candidates
+        // and crushed the blue bars to 4px slivers — invisible. Exact
+        // counts are printed on the bars, so separate scales don't mislead.
+        const maxN = Math.max(1, ...days.map(x => x.n));
+        const maxF = Math.max(1, ...days.map(x => x.f));
         const ch = $("cand-chart"); ch.innerHTML = "";
         for (const x of days) {
           const b = document.createElement("div"); b.className = "bar";
           const hc = Math.max(x.n ? 3 : 0, Math.round(x.n / maxN * 56));
-          const hf = Math.max(x.f ? 3 : 0, Math.round(x.f / maxN * 56));
+          const hf = Math.max(x.f ? 3 : 0, Math.round(x.f / maxF * 56));
           b.innerHTML = '<div class="n">'+(x.n||"")+'</div>'
             + '<div style="display:flex;gap:2px;align-items:flex-end;">'
             + '<div class="col" title="'+x.n+' candidates" style="height:'+hc+'px;'+(x.n?"":"opacity:.15")+'"></div>'
@@ -825,11 +879,15 @@ async function refresh() {
           if (x.f) b.querySelectorAll(".n")[0].innerHTML += ' <span style="color:var(--red)">✕'+x.f+'</span>';
           ch.appendChild(b);
         }
-        // legend
-        const lg = document.createElement("div");
-        lg.style.cssText = "font-size:11px;color:var(--dim);margin-top:6px;";
-        lg.innerHTML = '<span style="display:inline-block;width:10px;height:10px;background:var(--accent,#4da3ff);border-radius:2px;"></span> candidates &nbsp; <span style="display:inline-block;width:10px;height:10px;background:var(--red);border-radius:2px;"></span> failed runs';
-        ch.parentNode.appendChild(lg);
+        // legend (once — refresh() re-runs every 60s, don't stack them)
+        let lg = document.getElementById("cand-legend");
+        if (!lg) {
+          lg = document.createElement("div");
+          lg.id = "cand-legend";
+          lg.style.cssText = "font-size:11px;color:var(--dim);margin-top:6px;";
+          lg.innerHTML = '<span style="display:inline-block;width:10px;height:10px;background:var(--accent,#4da3ff);border-radius:2px;"></span> candidates &nbsp; <span style="display:inline-block;width:10px;height:10px;background:var(--red);border-radius:2px;"></span> failed runs';
+          ch.parentNode.appendChild(lg);
+        }
       } catch(e) { $("cand-chart").innerHTML = '<div style="color:var(--dim);font-size:12px;">chart unavailable</div>'; }
     } catch(e) { $("backlog-n").textContent = "?"; }
 
@@ -972,6 +1030,7 @@ async function refresh() {
     quotaStatic("quota-orx", "orx · GitHub Actions free tier (no meter)", paused.orx);
     quotaStatic("quota-gemini", "Gemini · free tier", paused.gemini);
     quotaStatic("quota-agy", "Agy · free tier", paused.agy);
+    quotaStatic("quota-qa", "QA · mostly mechanical, no meter", paused.qa);
 
     $("updated").textContent = "updated "+new Date().toLocaleTimeString();
   } catch(e) {
