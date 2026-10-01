@@ -813,9 +813,10 @@ async function refresh() {
         }
         const days = [];
         const nowD = new Date();
+        const p2 = n => String(n).padStart(2,"0");
         for (let i = 13; i >= 0; i--) {
           const d = new Date(nowD); d.setDate(d.getDate() - i);
-          const key = d.toISOString().slice(0,10);
+          const key = d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate());
           days.push({key, label: (d.getMonth()+1)+"/"+d.getDate(), n: perDay[key]||0, f: failsPerDay[key]||0});
         }
         const maxN = Math.max(1, ...days.map(x => Math.max(x.n, x.f)));
