@@ -412,6 +412,25 @@
     </div>
   </div>
 
+  <div class="card" id="card-screener">
+    <h2>Screener · idea hunter</h2>
+    <span class="pill grey" id="pill-screener">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="s-runs">–</div><div class="k">runs · 24h</div></div>
+      <div class="stat"><div class="v" id="s-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="s-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="s-cand">–</div><div class="k">discoveries</div></div>
+      <div class="stat"><div class="v" id="s-verd">–</div><div class="k">verdicts</div></div>
+      <div class="stat"><div class="v" id="s-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="s-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-s">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-screener">Nap 12h</button>
+      <button id="btn-wake-screener">Wake</button>
+    </div>
+  </div>
+
   <div class="card" id="card-muse">
     <h2>Muse · ops check</h2>
     <span class="pill grey" id="pill-muse">…</span>
@@ -461,6 +480,7 @@
       <tr><td>kaggle3</td><td id="w-3-runs">–</td><td id="w-3-ofc">–</td><td id="w-3-tok">–</td><td id="w-3-cand">–</td><td id="w-3-verd">–</td></tr>
       <tr><td>kaggle4</td><td id="w-4-runs">–</td><td id="w-4-ofc">–</td><td id="w-4-tok">–</td><td id="w-4-cand">–</td><td id="w-4-verd">–</td></tr>
       <tr><td>crosscheck</td><td id="w-z-runs">–</td><td id="w-z-ofc">–</td><td id="w-z-tok">–</td><td id="w-z-cand">–</td><td id="w-z-verd">–</td></tr>
+      <tr><td>screener</td><td id="w-s-runs">–</td><td id="w-s-ofc">–</td><td id="w-s-tok">–</td><td id="w-s-cand">–</td><td id="w-s-verd">–</td></tr>
       <tr><td>qa</td><td id="w-q-runs">–</td><td id="w-q-ofc">–</td><td id="w-q-tok">–</td><td id="w-q-cand">–</td><td id="w-q-verd">–</td></tr>
       <tr><td><b>total</b></td><td id="w-t-runs">–</td><td id="w-t-ofc">–</td><td id="w-t-tok">–</td><td id="w-t-cand">–</td><td id="w-t-verd">–</td></tr>
     </table>
@@ -582,10 +602,10 @@ function stats24(rows, agent) {
 // statuses that mean "ran, nothing to do" rather than a failure
 function isIdleish(st) { return st==="idle"||st==="no_code"||st==="not_run"; }
 
-const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["r","groq"],["n","nvidia"],["w","orx"],["x","kaggle"],["y","kaggle2"],["3","kaggle3"],["4","kaggle4"],["z","crosscheck"],["q","qa"]];
+const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["r","groq"],["n","nvidia"],["w","orx"],["x","kaggle"],["y","kaggle2"],["3","kaggle3"],["4","kaggle4"],["z","crosscheck"],["s","screener"],["q","qa"]];
 // muse is ops-only (hourly health checks, no research stats) — it gets a
 // simple health card below instead of a stats row anywhere
-const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", r:"groq", n:"nvidia", w:"orx", x:"kaggle", y:"kaggle2", 3:"kaggle3", 4:"kaggle4", z:"crosscheck", u:"muse", q:"qa"};
+const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", r:"groq", n:"nvidia", w:"orx", x:"kaggle", y:"kaggle2", 3:"kaggle3", 4:"kaggle4", z:"crosscheck", s:"screener", u:"muse", q:"qa"};
 
 function resetHHMM(iso) {
   try { return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
