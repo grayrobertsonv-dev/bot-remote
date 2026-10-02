@@ -260,6 +260,44 @@
     </div>
   </div>
 
+  <div class="card" id="card-groq">
+    <h2>Groq · researcher</h2>
+    <span class="pill grey" id="pill-groq">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="r-runs">–</div><div class="k">runs · 24h</div></div>
+      <div class="stat"><div class="v" id="r-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="r-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="r-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="r-verd">–</div><div class="k">verdicts</div></div>
+      <div class="stat"><div class="v" id="r-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="r-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-r">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-groq">Nap 12h</button>
+      <button id="btn-wake-groq">Wake</button>
+    </div>
+  </div>
+
+  <div class="card" id="card-nvidia">
+    <h2>NVIDIA · researcher</h2>
+    <span class="pill grey" id="pill-nvidia">…</span>
+    <div class="statgrid">
+      <div class="stat"><div class="v" id="n-runs">–</div><div class="k">runs · 24h</div></div>
+      <div class="stat"><div class="v" id="n-tok">–</div><div class="k">tokens in/out</div></div>
+      <div class="stat"><div class="v" id="n-cap">–</div><div class="k">cap hits</div></div>
+      <div class="stat"><div class="v" id="n-cand">–</div><div class="k">candidates</div></div>
+      <div class="stat"><div class="v" id="n-verd">–</div><div class="k">verdicts</div></div>
+      <div class="stat"><div class="v" id="n-last">–</div><div class="k">last run</div></div>
+      <div class="stat"><div class="v" id="n-ok">–</div><div class="k">ok / fail</div></div>
+    </div>
+    <div class="act" id="act-n">💤 idle</div>
+    <div class="rowbtn">
+      <button id="btn-nap-nvidia">Nap 12h</button>
+      <button id="btn-wake-nvidia">Wake</button>
+    </div>
+  </div>
+
   <div class="card" id="card-orx">
     <h2>orx · Actions researcher</h2>
     <span class="pill grey" id="pill-orx">…</span>
@@ -415,6 +453,8 @@
       <tr><td>gemini</td><td id="w-m-runs">–</td><td id="w-m-ofc">–</td><td id="w-m-tok">–</td><td id="w-m-cand">–</td><td id="w-m-verd">–</td></tr>
       <tr><td>agy</td><td id="w-a-runs">–</td><td id="w-a-ofc">–</td><td id="w-a-tok">–</td><td id="w-a-cand">–</td><td id="w-a-verd">–</td></tr>
       <tr><td>or</td><td id="w-o-runs">–</td><td id="w-o-ofc">–</td><td id="w-o-tok">–</td><td id="w-o-cand">–</td><td id="w-o-verd">–</td></tr>
+      <tr><td>groq</td><td id="w-r-runs">–</td><td id="w-r-ofc">–</td><td id="w-r-tok">–</td><td id="w-r-cand">–</td><td id="w-r-verd">–</td></tr>
+      <tr><td>nvidia</td><td id="w-n-runs">–</td><td id="w-n-ofc">–</td><td id="w-n-tok">–</td><td id="w-n-cand">–</td><td id="w-n-verd">–</td></tr>
       <tr><td>orx</td><td id="w-w-runs">–</td><td id="w-w-ofc">–</td><td id="w-w-tok">–</td><td id="w-w-cand">–</td><td id="w-w-verd">–</td></tr>
       <tr><td>kaggle</td><td id="w-x-runs">–</td><td id="w-x-ofc">–</td><td id="w-x-tok">–</td><td id="w-x-cand">–</td><td id="w-x-verd">–</td></tr>
       <tr><td>kaggle2</td><td id="w-y-runs">–</td><td id="w-y-ofc">–</td><td id="w-y-tok">–</td><td id="w-y-cand">–</td><td id="w-y-verd">–</td></tr>
@@ -542,10 +582,10 @@ function stats24(rows, agent) {
 // statuses that mean "ran, nothing to do" rather than a failure
 function isIdleish(st) { return st==="idle"||st==="no_code"||st==="not_run"; }
 
-const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["w","orx"],["x","kaggle"],["y","kaggle2"],["3","kaggle3"],["4","kaggle4"],["z","crosscheck"],["q","qa"]];
+const AGENTS = [["c","claude"],["g","gpt"],["m","gemini"],["a","agy"],["o","or"],["r","groq"],["n","nvidia"],["w","orx"],["x","kaggle"],["y","kaggle2"],["3","kaggle3"],["4","kaggle4"],["z","crosscheck"],["q","qa"]];
 // muse is ops-only (hourly health checks, no research stats) — it gets a
 // simple health card below instead of a stats row anywhere
-const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", w:"orx", x:"kaggle", y:"kaggle2", 3:"kaggle3", 4:"kaggle4", z:"crosscheck", u:"muse", q:"qa"};
+const AGENT_OF = {c:"claude", g:"gpt", m:"gemini", a:"agy", o:"or", r:"groq", n:"nvidia", w:"orx", x:"kaggle", y:"kaggle2", 3:"kaggle3", 4:"kaggle4", z:"crosscheck", u:"muse", q:"qa"};
 
 function resetHHMM(iso) {
   try { return new Date(iso).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"}); }
