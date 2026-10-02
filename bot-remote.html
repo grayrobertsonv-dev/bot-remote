@@ -401,13 +401,15 @@
     <h2 id="usage-h2">Usage · all time</h2>
     <div class="cbtns" id="usage-btns">
       <button class="cbtn active" data-r="all">All</button>
+      <button class="cbtn" data-r="today">Today</button>
       <button class="cbtn" data-r="7">7d</button>
       <button class="cbtn" data-r="14">14d</button>
       <button class="cbtn" data-r="month">Month</button>
       <select class="cbtn" id="usage-month" hidden></select>
     </div>
-    <table>
-      <tr><th>agent</th><th>runs</th><th>ok/fail/cap</th><th>tokens</th><th>cand</th><th>verd</th></tr>
+    <div class="cbtns"><input type="date" id="usage-date" class="cbtn" style="flex:1;text-align:center" aria-label="Pick a specific date"></div>
+    <table id="usage-table">
+      <tr><th data-uk="agent">agent</th><th data-uk="runs">runs</th><th data-uk="ofc">ok/fail/cap</th><th data-uk="tok">tokens</th><th data-uk="cand">cand</th><th data-uk="verd">verd</th></tr>
       <tr><td>claude</td><td id="w-c-runs">–</td><td id="w-c-ofc">–</td><td id="w-c-tok">–</td><td id="w-c-cand">–</td><td id="w-c-verd">–</td></tr>
       <tr><td>gpt</td><td id="w-g-runs">–</td><td id="w-g-ofc">–</td><td id="w-g-tok">–</td><td id="w-g-cand">–</td><td id="w-g-verd">–</td></tr>
       <tr><td>gemini</td><td id="w-m-runs">–</td><td id="w-m-ofc">–</td><td id="w-m-tok">–</td><td id="w-m-cand">–</td><td id="w-m-verd">–</td></tr>
@@ -448,12 +450,18 @@ if (!CFG.pat && location.hash.indexOf("#t=") === 0) {
   } catch(e) {}
 }
 let PIPE_SHA = null, PIPE_ON = false;
-// Usage table range (Gray's call 2026-10-01): default all-time, buttons
-// for 7d / 14d / Month (month picker). Survives refreshes via localStorage.
-let usageRange = (CFG.usageRange === "7" || CFG.usageRange === "14" || CFG.usageRange === "month") ? CFG.usageRange : "all";
+// Usage table range (Gray's call 2026-10-01/02): default all-time, buttons
+// for Today / 7d / 14d / Month (month picker), plus a date picker for any
+// specific day. Survives refreshes via localStorage.
+let usageRange = (CFG.usageRange === "today" || CFG.usageRange === "7" || CFG.usageRange === "14" || CFG.usageRange === "month" || CFG.usageRange === "date") ? CFG.usageRange : "all";
 let usageMonth = (typeof CFG.usageMonth === "string" && /^\d{4}-\d{2}$/.test(CFG.usageMonth)) ? CFG.usageMonth : null;
+let usageDate = (typeof CFG.usageDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(CFG.usageDate)) ? CFG.usageDate : null;
+if (usageRange === "date" && !usageDate) usageRange = "all";
+// usage table sort: null = default agent order; otherwise {key, dir} with
+// dir 1 = descending, -1 = ascending (Gray: first tap sorts descending).
+let usageSortKey = null, usageSortDir = 1;
 function saveUsageCfg() {
-  CFG.usageRange = usageRange; CFG.usageMonth = usageMonth;
+  CFG.usageRange = usageRange; CFG.usageMonth = usageMonth; CFG.usageDate = usageDate;
   try { localStorage.setItem("botremote", JSON.stringify(CFG)); } catch(e) {}
 }
 // backlog tree is cached 5min — candidates/verdicts change on run cadence,
@@ -763,6 +771,11 @@ async function refresh() {
     };
     const usageInRange = r => {
       if (usageRange === "month") return (r.ts||"").slice(0,7) === usageMonth;
+      if (usageRange === "date" && usageDate) return (r.ts||"").slice(0,10) === usageDate;
+      if (usageRange === "today") {
+        const p2 = v => String(v).padStart(2,"0"), nd = new Date();
+        return (r.ts||"").slice(0,10) === nd.getFullYear()+"-"+p2(nd.getMonth()+1)+"-"+p2(nd.getDate());
+      }
       const co = usageCutoff();
       if (co === null) return true;
       const m = tsMs(r.ts||""); return !isNaN(m) && m >= co;
@@ -773,6 +786,11 @@ async function refresh() {
       for (const k of Object.keys(candDaily)) if (/^\d{4}-\d{2}-\d{2}$/.test(k)) keys.push(k);
       if (usageRange === "month" && usageMonth)
         return keys.filter(k => k.slice(0,7) === usageMonth).sort();
+      if (usageRange === "today") {
+        const p2 = v => String(v).padStart(2,"0"), nd = new Date();
+        return [nd.getFullYear()+"-"+p2(nd.getMonth()+1)+"-"+p2(nd.getDate())];
+      }
+      if (usageRange === "date") return usageDate ? [usageDate] : [];
       const co = usageCutoff();
       if (co !== null) {
         const n = usageRange === "7" ? 7 : 14, out = [], nowD = new Date();
@@ -786,6 +804,9 @@ async function refresh() {
       return keys.sort();
     };
     const usageVerdicts = () => {
+      if (usageRange === "today") return vByV.d1 || null;
+      if (usageRange === "date")
+        return (vByV.by_day && usageDate && vByV.by_day[usageDate]) || null;
       if (usageRange === "7") return vByV.d7 || null;
       if (usageRange === "14") return vByV.d14 || null;
       if (usageRange === "month")
@@ -793,6 +814,11 @@ async function refresh() {
       return vByV.all || null;
     };
     const usageRangeName = () => {
+      if (usageRange === "today") return "today";
+      if (usageRange === "date" && usageDate) {
+        const p = usageDate.split("-").map(Number);
+        return new Date(p[0], p[1]-1, p[2]).toLocaleDateString("en-US",{month:"short",day:"numeric"});
+      }
       if (usageRange === "7") return "7d";
       if (usageRange === "14") return "14d";
       if (usageRange === "month" && usageMonth) {
@@ -822,6 +848,12 @@ async function refresh() {
       document.querySelectorAll("#usage-btns .cbtn[data-r]").forEach(b =>
         b.classList.toggle("active", b.getAttribute("data-r") === usageRange));
       $("usage-h2").textContent = "Usage · " + usageRangeName();
+      // date picker: reflect date mode, clear when a preset is chosen
+      const din = $("usage-date");
+      if (din) {
+        if (usageRange === "date" && usageDate) { din.value = usageDate; din.classList.add("active"); }
+        else { din.value = ""; din.classList.remove("active"); }
+      }
     }
     if (!window._usageWired) {
       window._usageWired = true;
@@ -830,6 +862,16 @@ async function refresh() {
       });
       const msel = $("usage-month");
       if (msel) msel.onchange = e => { usageMonth = e.target.value; saveUsageCfg(); refresh(); };
+      const din = $("usage-date");
+      if (din) {
+        // cap at today (local) — future dates have no data
+        const p2 = v => String(v).padStart(2,"0"), nd = new Date();
+        din.max = nd.getFullYear()+"-"+p2(nd.getMonth()+1)+"-"+p2(nd.getDate());
+        din.onchange = e => {
+          if (!e.target.value) return;
+          usageDate = e.target.value; usageRange = "date"; saveUsageCfg(); refresh();
+        };
+      }
     }
 
     // quota auto-stop: the loop idles at 90% without writing a run row,
@@ -892,16 +934,20 @@ async function refresh() {
       // Guard: a missing usage-table row must never abort the whole refresh.
       if (!$("w-"+pfx+"-runs")) continue;
       const uS = usageRowStats(agent);
-      $("w-"+pfx+"-runs").textContent = uS.runs;
-      $("w-"+pfx+"-ofc").textContent = uS.ok+"/"+uS.fail+"/"+uS.cap;
-      $("w-"+pfx+"-tok").textContent = fmtN(uS.tin+uS.tout);
+      const cRuns = $("w-"+pfx+"-runs"), cOfc = $("w-"+pfx+"-ofc"), cTok = $("w-"+pfx+"-tok"),
+            cCand = $("w-"+pfx+"-cand"), cVerd = $("w-"+pfx+"-verd");
+      cRuns.textContent = uS.runs; cRuns.dataset.sortv = uS.runs;
+      cOfc.textContent = uS.ok+"/"+uS.fail+"/"+uS.cap; cOfc.dataset.sortv = uS.fail;
+      cTok.textContent = fmtN(uS.tin+uS.tout); cTok.dataset.sortv = uS.tin+uS.tout;
       // cand: git ground truth summed over the range's days (by_agent
       // split). Run-log new_candidates double-counts under concurrent
       // supervisors, so it is never used here.
       let uCand = 0;
       for (const d of uDays) uCand += (candDayAgents(d)[agent]||0);
-      $("w-"+pfx+"-cand").textContent = uCand;
-      $("w-"+pfx+"-verd").textContent = agent==="crosscheck" ? uS.chk : (uVerd ? (uVerd[agent]||0) : "–");
+      cCand.textContent = uCand; cCand.dataset.sortv = uCand;
+      const uVerdN = agent==="crosscheck" ? uS.chk : (uVerd ? (uVerd[agent]||0) : -1);
+      cVerd.textContent = agent==="crosscheck" ? uS.chk : (uVerd ? (uVerd[agent]||0) : "–");
+      cVerd.dataset.sortv = uVerdN;
       // QA's activity line is set by renderQA above — the generic block
       // below would overwrite it with researcher wording.
       if (agent !== "qa") {
@@ -945,6 +991,60 @@ async function refresh() {
       $("w-t-cand").textContent = tCand;
       $("w-t-verd").textContent = uVerd ? Object.values(uVerd).reduce((a,b)=>a+(b||0),0) : "–";
     }
+
+    // usage table sorting: tap a column header to sort (first tap =
+    // descending, second = ascending, third = back to default order).
+    // Arrow ▲▼ shows next to the sorted column. Total row stays pinned.
+    const applyUsageSort = () => {
+      const tbl = $("usage-table");
+      if (!tbl || !tbl.tBodies[0]) return;
+      const tb = tbl.tBodies[0];
+      const allRows = [...tb.rows];
+      if (allRows.length < 2) return;
+      const headRow = allRows[0], totalRow = allRows[allRows.length-1];
+      const bodyRows = allRows.slice(1, -1);
+      // restore default order first (rows carry their original index)
+      bodyRows.forEach((r,i) => { if (r.dataset.oidx === undefined) r.dataset.oidx = i; });
+      let ordered = [...bodyRows].sort((a,b) => (+a.dataset.oidx) - (+b.dataset.oidx));
+      if (usageSortKey) {
+        const cellFor = (r) => {
+          if (usageSortKey === "agent") return r.cells[0].textContent.trim();
+          const map = {runs:1, ofc:2, tok:3, cand:4, verd:5};
+          const c = r.cells[map[usageSortKey]];
+          return parseFloat((c && c.dataset.sortv) || "0");
+        };
+        ordered = [...bodyRows].sort((a,b) => {
+          const va = cellFor(a), vb = cellFor(b);
+          let cmp;
+          if (usageSortKey === "agent") cmp = String(va).localeCompare(String(vb));
+          else cmp = (va - vb) || String(a.cells[0].textContent).localeCompare(String(b.cells[0].textContent));
+          return usageSortDir === 1 ? -cmp : cmp;
+        });
+      }
+      tb.appendChild(headRow);
+      ordered.forEach(r => tb.appendChild(r));
+      tb.appendChild(totalRow);
+      // arrows
+      tbl.querySelectorAll("th[data-uk]").forEach(th => {
+        const k = th.getAttribute("data-uk");
+        const base = th.dataset.label || (th.dataset.label = th.textContent.replace(/[▲▼]/g,"").trim());
+        th.textContent = base + (k === usageSortKey ? (usageSortDir === 1 ? " ▼" : " ▲") : "");
+      });
+    };
+    if (!window._usageSortWired) {
+      window._usageSortWired = true;
+      document.querySelectorAll("#usage-table th[data-uk]").forEach(th => {
+        th.style.cursor = "pointer";
+        th.title = "tap to sort";
+        th.onclick = () => {
+          const k = th.getAttribute("data-uk");
+          if (usageSortKey === k) usageSortDir = -usageSortDir;
+          else { usageSortKey = k; usageSortDir = 1; }
+          applyUsageSort();
+        };
+      });
+    }
+    applyUsageSort();
 
     // Muse ops health: no run stats — just "is the hourly check alive?"
     try {
@@ -1049,7 +1149,7 @@ async function refresh() {
         for (let i = n-1; i >= 0; i--) {
           const d = new Date(nowD); d.setDate(d.getDate() - i);
           const key = d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate());
-          days.push({key, label: (d.getMonth()+1)+"/"+d.getDate(), n: candDayTotal(key), f: failsPerDay[key]||0});
+          days.push({key, label: (d.getMonth()+1)+"/"+d.getDate(), isToday: i===0, n: candDayTotal(key), f: failsPerDay[key]||0});
         }
         return days;
       }
@@ -1075,7 +1175,7 @@ async function refresh() {
           s += '<rect x="'+f1(cx+1)+'" y="'+yF+'" width="'+f1(barW)+'" height="'+Math.max(hf, x.f?2:0)+'" rx="2" style="fill:var(--red)"'+(x.f?'':' opacity="0.18"')+'><title>'+x.key+': '+x.f+' failed runs</title></rect>';
           if (x.n) s += '<text x="'+f1(cx-barW/2-1)+'" y="'+(yN-7)+'" font-size="'+fsC+'" font-weight="700" text-anchor="middle" style="fill:var(--txt)">'+x.n+'</text>';
           if (x.f) s += '<text x="'+f1(cx+barW/2+1)+'" y="'+(yF-7)+'" font-size="'+fsC+'" font-weight="700" text-anchor="middle" style="fill:var(--red)">✕'+x.f+'</text>';
-          if (i % stride === 0) s += '<text x="'+f1(cx)+'" y="'+(H-6)+'" font-size="'+fsD+'" text-anchor="middle" style="fill:var(--dim)">'+x.label+'</text>';
+          if (i % stride === 0 || x.isToday) s += '<text x="'+f1(cx)+'" y="'+(H-6)+'" font-size="'+fsD+'" text-anchor="middle" style="fill:var(--dim)'+(x.isToday?';font-weight:700':'')+'">'+(x.isToday?"today":x.label)+'</text>';
         });
         return s + '</svg>';
       }
@@ -1272,8 +1372,21 @@ async function togglePipeline() {
   try {
     const swf = await ghGetSha("SWITCH.md");
     const lines = b64d(swf.content).split("\n");
-    lines[0] = lines[0].trim()==="# ON" ? "# OFF" : "# ON";
+    const turningOff = lines[0].trim()==="# ON";
+    lines[0] = turningOff ? "# OFF" : "# ON";
     await gh("SWITCH.md","PUT",{message:"toggle pipeline switch via Bot Remote",content:b64e(lines.join("\n")),sha:swf.sha});
+    // Best-effort: also disable/enable the scheduled GitHub Actions
+    // workflows so no runner minutes are spent at all while OFF.
+    // Needs actions:write on the PAT; if it fails, the in-workflow
+    // kill-switch gates still stop all substantive work.
+    try {
+      for (const wf of ["or-researcher.yml","cpu-robustness.yml"]) {
+        await fetch("https://api.github.com/repos/"+GH_REPO+"/actions/workflows/"+wf+"/"+(turningOff?"disable":"enable"), {
+          method: "PUT",
+          headers: {"Authorization":"Bearer "+CFG.pat, "Accept":"application/vnd.github+json"}
+        });
+      }
+    } catch(e) { console.warn("workflow disable/enable skipped:", e.message); }
     refresh();
   } catch(e) { showErr("Toggle failed: "+e.message); }
 }
