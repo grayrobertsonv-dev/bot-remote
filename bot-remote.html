@@ -708,7 +708,7 @@ async function refresh() {
     // active-failure alert banner
     // (2026-10-03: best-effort free-tier providers only alert on actionable
     // errors or extreme streaks — transient 504/timeout/429 noise is hidden)
-    const BEST_EFFORT = ["orx", "groq", "groqx", "nvidia"];
+    const BEST_EFFORT = ["or", "orx", "groq", "groqx", "nvidia"];
     const TRANSIENT_PAT = /504|timeout|timed out|429|too many requests|1010|cloudflare|empty_response|data_unavailable/i;
     function isTransientErr(err) { return TRANSIENT_PAT.test(String(err || "")); }
     try {
